@@ -1,47 +1,46 @@
+from pdf_reader import read_pdf
+from splitter import split_text
+from embeddings import create_embeddings
+from faiss_db import create_faiss_index
+from search import search_chunks
 from chatbot import ask_ai
 
-messages = [
-    {
-        "role": "system",
-        "content": (
-            "You are an AI Study Assistant. "
-            "Always respond in English "
-            "Give clear, accurate and concise answers."
-        )
-    }
-]
+pdf_path = "paper2.pdf"
 
-print("=" * 40)
-print("🤖 AI Study Assistant")
-print("=" * 40)
+text = read_pdf(pdf_path)
+
+chunks = split_text(text)
+
+embeddings = create_embeddings(chunks)
+
+index = create_faiss_index(embeddings)
+
+print("=" * 50)
+print("📚 AI Study Assistant (RAG)")
+print("=" * 50)
 
 while True:
 
     question = input("\nYou: ")
 
     if question.lower() == "exit":
-        print("\n👋 Thank you for using AI Study Assistant!")
+        print("Goodbye!")
         break
 
-    messages.append(
-        {
-            "role": "user",
-            "content": question
-        }
+    relevant_chunks = search_chunks(
+        question,
+        index,
+        chunks,
+        k=3
     )
 
-    try:
-        answer = ask_ai(messages)
+    print("\n========== RETRIEVED CHUNKS ==========\n")
 
-        messages.append(
-            {
-                "role": "assistant",
-                "content": answer
-            }
-        )
+    for i, chunk in enumerate(relevant_chunks, start=1):
+        print(f"Chunk {i}\n")
+        print(chunk[:300])
+        print("-" * 60)
 
+    context = "\n\n".join(relevant_chunks)
 
-    except Exception as e:
-        print("\nAI:")
-        print("❌ Sorry, I couldn't contact the AI service.")
-        print(f"Error: {e}")
+    ask_ai(question, context)
