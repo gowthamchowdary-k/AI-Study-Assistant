@@ -1,7 +1,7 @@
 from config import client
 
 
-MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
+MODEL = "poolside/laguna-xs-2.1:free"
 
 
 def ask_ai(question, context):
