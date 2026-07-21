@@ -6,9 +6,16 @@ from search import search_chunks
 from chatbot import ask_ai
 from memory import save_context, get_context
 
-# -----------------------------
-# Detect follow-up questions
-# -----------------------------
+from vector_store import (
+    save_vector_store,
+    load_vector_store,
+    vector_store_exists
+)
+
+# -----------------------------------
+# Follow-up Question Detection
+# -----------------------------------
+
 FOLLOW_UP_WORDS = [
     "explain",
     "simple",
@@ -30,6 +37,7 @@ FOLLOW_UP_WORDS = [
 
 
 def is_follow_up(question):
+
     question = question.lower()
 
     for word in FOLLOW_UP_WORDS:
@@ -39,22 +47,39 @@ def is_follow_up(question):
     return False
 
 
-# -----------------------------
-# Load PDF
-# -----------------------------
-pdf_path = "paper2.pdf"
+# -----------------------------------
+# Load Vector Store
+# -----------------------------------
 
-text = read_pdf(pdf_path)
+if vector_store_exists():
 
-chunks = split_text(text)
+    print("\nLoading existing vector database...\n")
 
-embeddings = create_embeddings(chunks)
+    index, chunks = load_vector_store()
 
-index = create_faiss_index(embeddings)
+else:
+
+    print("\nCreating vector database...\n")
+
+    pdf_path = "paper2.pdf"
+
+    text = read_pdf(pdf_path)
+
+    chunks = split_text(text)
+
+    embeddings = create_embeddings(chunks)
+
+    index = create_faiss_index(embeddings)
+
+    save_vector_store(index, chunks)
+
+    print("\nVector database saved.\n")
+
 
 print("=" * 50)
 print("📚 AI Study Assistant (Conversational RAG)")
 print("=" * 50)
+
 
 while True:
 
@@ -68,9 +93,19 @@ while True:
         print("Goodbye!")
         break
 
-    # ------------------------------------
-    # Follow-up question
-    # ------------------------------------
+    greetings = [
+        "hi",
+        "hello",
+        "hey",
+        "good morning",
+        "good evening"
+    ]
+
+    if question.lower() in greetings:
+
+        print("\nAI: Hello! How can I help you today?")
+        continue
+
     if is_follow_up(question) and get_context():
 
         print("\nUsing previous context...\n")
