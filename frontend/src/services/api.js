@@ -1,22 +1,92 @@
-// Backend URL
-const API_BASE = "http://127.0.0.1:5000";
+// =======================
+// API Configuration
+// =======================
+
+const API_BASE =
+    import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
+
+const REQUEST_TIMEOUT = 30000;
+
+// =======================
+// Generic Request Helper
+// =======================
 
 async function request(endpoint, options = {}) {
-    const response = await fetch(`${API_BASE}${endpoint}`, options);
 
-    let data = {};
+    const controller = new AbortController();
+
+    const timeout = setTimeout(() => {
+
+        controller.abort();
+
+    }, REQUEST_TIMEOUT);
 
     try {
-        data = await response.json();
-    } catch (e) {
-        // Ignore empty response body
+
+        const response = await fetch(
+
+            `${API_BASE}${endpoint}`,
+
+            {
+
+                ...options,
+
+                signal: controller.signal
+
+            }
+
+        );
+
+        clearTimeout(timeout);
+
+        let data = {};
+
+        try {
+
+            data = await response.json();
+
+        }
+
+        catch {
+
+            // Ignore empty body
+
+        }
+
+        if (!response.ok) {
+
+            throw new Error(
+
+                data.error ||
+
+                `Request failed (${response.status})`
+
+            );
+
+        }
+
+        return data;
+
     }
 
-    if (!response.ok) {
-        throw new Error(data.error || "Something went wrong.");
+    catch (err) {
+
+        clearTimeout(timeout);
+
+        if (err.name === "AbortError") {
+
+            throw new Error(
+
+                "Request timed out. Please try again."
+
+            );
+
+        }
+
+        throw err;
+
     }
 
-    return data;
 }
 
 // =======================
@@ -24,20 +94,35 @@ async function request(endpoint, options = {}) {
 // =======================
 
 export async function sendMessage(question) {
+
     return request("/chat", {
+
         method: "POST",
+
         headers: {
-            "Content-Type": "application/json",
+
+            "Content-Type": "application/json"
+
         },
+
         body: JSON.stringify({
-            question,
-        }),
+
+            question
+
+        })
+
     });
+
 }
 
-// NEW
+// =======================
+// Chat History
+// =======================
+
 export async function getHistory() {
+
     return request("/history");
+
 }
 
 // =======================
@@ -45,13 +130,19 @@ export async function getHistory() {
 // =======================
 
 export async function uploadPDF(file) {
+
     const formData = new FormData();
+
     formData.append("file", file);
 
     return request("/upload", {
+
         method: "POST",
-        body: formData,
+
+        body: formData
+
     });
+
 }
 
 // =======================
@@ -59,23 +150,39 @@ export async function uploadPDF(file) {
 // =======================
 
 export async function getDocuments() {
+
     return request("/documents");
+
 }
 
 export async function deleteDocument(filename) {
-    return request(`/documents/${encodeURIComponent(filename)}`, {
-        method: "DELETE",
-    });
+
+    return request(
+
+        `/documents/${encodeURIComponent(filename)}`,
+
+        {
+
+            method: "DELETE"
+
+        }
+
+    );
+
 }
 
 // =======================
-// Reset Chat
+// Reset Conversation
 // =======================
 
 export async function resetChat() {
+
     return request("/reset", {
-        method: "POST",
+
+        method: "POST"
+
     });
+
 }
 
 // =======================
@@ -83,5 +190,7 @@ export async function resetChat() {
 // =======================
 
 export async function healthCheck() {
+
     return request("/health");
+
 }

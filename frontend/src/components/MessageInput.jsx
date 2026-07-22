@@ -16,7 +16,7 @@ export default function MessageInput({
 
         if (!text.trim()) return;
 
-        onSend(text);
+        onSend(text.trim());
 
         setText("");
 
@@ -28,15 +28,39 @@ export default function MessageInput({
 
             onSubmit={handleSubmit}
 
-            className="border-t bg-white p-4 flex gap-3"
+            className="
+                border-t
+                bg-white
+                p-3
+                sm:p-4
+                flex
+                gap-3
+                items-end
+            "
 
         >
 
-            <input
+            <textarea
 
-                className="flex-1 border rounded-lg px-4 py-2"
+                rows={1}
 
-                placeholder="Ask anything..."
+                className="
+                    flex-1
+                    border
+                    border-gray-300
+                    rounded-xl
+                    px-4
+                    py-3
+                    resize-none
+                    outline-none
+                    focus:ring-2
+                    focus:ring-blue-500
+                    focus:border-blue-500
+                    text-sm
+                    sm:text-base
+                "
+
+                placeholder="Ask anything about your uploaded PDFs..."
 
                 value={text}
 
@@ -44,17 +68,43 @@ export default function MessageInput({
 
                 disabled={loading}
 
+                onKeyDown={(e) => {
+
+                    if (e.key === "Enter" && !e.shiftKey) {
+
+                        e.preventDefault();
+
+                        handleSubmit(e);
+
+                    }
+
+                }}
+
             />
 
             <button
 
-                className="bg-blue-600 text-white px-6 rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                type="submit"
 
-                disabled={loading}
+                disabled={loading || !text.trim()}
+
+                className="
+                    bg-blue-600
+                    hover:bg-blue-700
+                    disabled:bg-gray-400
+                    disabled:cursor-not-allowed
+                    transition
+                    text-white
+                    px-5
+                    sm:px-6
+                    py-3
+                    rounded-xl
+                    font-medium
+                "
 
             >
 
-                Send
+                {loading ? "..." : "Send"}
 
             </button>
 

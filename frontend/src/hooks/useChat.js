@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 
 import {
     sendMessage,
@@ -14,9 +15,6 @@ export default function useChat() {
 
     const [error, setError] = useState("");
 
-    // ----------------------------
-    // Load previous chat on startup
-    // ----------------------------
     useEffect(() => {
 
         loadHistory();
@@ -35,20 +33,23 @@ export default function useChat() {
 
             }
 
-        } catch (err) {
+        }
 
-            console.error("Failed to load history:", err);
+        catch (err) {
+
+            console.error(err);
+
+            toast.error("Couldn't load previous chat.");
 
         }
 
     }
 
-    // ----------------------------
-    // Send Message
-    // ----------------------------
     async function ask(question) {
 
-        if (!question.trim()) return;
+        const text = question.trim();
+
+        if (!text || loading) return;
 
         setLoading(true);
 
@@ -58,7 +59,7 @@ export default function useChat() {
 
             role: "user",
 
-            content: question
+            content: text
 
         };
 
@@ -72,21 +73,23 @@ export default function useChat() {
 
         try {
 
-            const response = await sendMessage(question);
+            const response = await sendMessage(text);
+
+            const assistantMessage = {
+
+                role: "assistant",
+
+                content: response.answer || "No response received.",
+
+                sources: response.sources || []
+
+            };
 
             setMessages(prev => [
 
                 ...prev,
 
-                {
-
-                    role: "assistant",
-
-                    content: response.answer,
-
-                    sources: response.sources || []
-
-                }
+                assistantMessage
 
             ]);
 
@@ -94,7 +97,11 @@ export default function useChat() {
 
         catch (err) {
 
-            setError(err.message);
+            const message = err.message || "Something went wrong.";
+
+            setError(message);
+
+            toast.error(message);
 
         }
 
@@ -106,9 +113,6 @@ export default function useChat() {
 
     }
 
-    // ----------------------------
-    // Clear Conversation
-    // ----------------------------
     async function clearConversation() {
 
         try {
@@ -119,11 +123,17 @@ export default function useChat() {
 
             setError("");
 
+            toast.success("Conversation cleared.");
+
         }
 
         catch (err) {
 
-            setError(err.message);
+            const message = err.message || "Unable to clear conversation.";
+
+            setError(message);
+
+            toast.error(message);
 
         }
 

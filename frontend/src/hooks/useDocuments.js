@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 import {
     getDocuments,
@@ -14,21 +15,35 @@ export default function useDocuments() {
 
     const [error, setError] = useState("");
 
+    // ----------------------------
+    // Fetch Documents
+    // ----------------------------
+
     async function refreshDocuments() {
 
         try {
 
             setLoading(true);
 
+            setError("");
+
             const response = await getDocuments();
 
             setDocuments(response.documents || []);
 
-        } catch (err) {
+        }
 
-            setError(err.message);
+        catch (err) {
 
-        } finally {
+            const message = err.message || "Failed to load documents.";
+
+            setError(message);
+
+            toast.error(message);
+
+        }
+
+        finally {
 
             setLoading(false);
 
@@ -36,23 +51,61 @@ export default function useDocuments() {
 
     }
 
+    // ----------------------------
+    // Upload PDF
+    // ----------------------------
+
     async function upload(file) {
+
+        if (!file) return;
+
+        if (loading) return;
+
+        // Only allow PDF
+        if (file.type !== "application/pdf") {
+
+            toast.error("Please upload a PDF file.");
+
+            return;
+
+        }
+
+        // 20 MB limit
+        if (file.size > 20 * 1024 * 1024) {
+
+            toast.error("Maximum file size is 20 MB.");
+
+            return;
+
+        }
 
         try {
 
             setLoading(true);
+
+            setError("");
 
             await uploadPDF(file);
 
             await refreshDocuments();
 
-        } catch (err) {
+            toast.success(`${file.name} uploaded successfully.`);
 
-            setError(err.message);
+        }
+
+        catch (err) {
+
+            const message = err.message || "Upload failed.";
+
+            setError(message);
+
+            toast.error(message);
 
             throw err;
 
-        } finally {
+        }
+
+        finally {
 
             setLoading(false);
 
@@ -60,21 +113,39 @@ export default function useDocuments() {
 
     }
 
+    // ----------------------------
+    // Delete PDF
+    // ----------------------------
+
     async function remove(filename) {
+
+        if (loading) return;
 
         try {
 
             setLoading(true);
 
+            setError("");
+
             await deleteDocument(filename);
 
-            await refreshDocuments();
+            setDocuments(prev => prev.filter(doc => doc !== filename));
 
-        } catch (err) {
+            toast.success("Document deleted.");
 
-            setError(err.message);
+        }
 
-        } finally {
+        catch (err) {
+
+            const message = err.message || "Delete failed.";
+
+            setError(message);
+
+            toast.error(message);
+
+        }
+
+        finally {
 
             setLoading(false);
 
