@@ -5,42 +5,139 @@ from memory import (
     add_ai_message
 )
 
-MODEL = "poolside/laguna-xs-2.1:free"
+MODEL = "openrouter/free"
 
 
-def ask_ai(question, context):
+def build_messages(question, context):
+    """
+    Builds the message list sent to the LLM.
+    """
 
-    # Get previous conversation
-    history = get_history()
+    history = get_history()[-6:]
 
-    # Build messages
+    system_prompt = f"""
+You are an intelligent AI Study Assistant.
+
+Your job is to help students understand concepts clearly, accurately, and naturally.
+
+==========================================================
+PRIMARY SOURCE
+==========================================================
+
+The uploaded document is your PRIMARY source of information.
+
+Document Context:
+
+{context}
+
+==========================================================
+RULES
+==========================================================
+
+1. Always use the uploaded document as the primary reference.
+
+2. If the answer exists in the document:
+   - Answer using the document.
+   - Explain it in simple language.
+
+3. If the user asks:
+   - Explain
+   - Why
+   - How
+   - Example
+   - Analogy
+   - Real-world application
+   - Advantages
+   - Disadvantages
+   - Interview questions
+
+   You may use your own general knowledge to improve the explanation,
+   but NEVER contradict the document.
+
+4. If only part of the answer exists in the document:
+   - First explain what the document says.
+   - Then clearly mention:
+     "Additional explanation based on general knowledge:"
+   - Continue the explanation.
+
+5. If the answer is completely unrelated to the uploaded document:
+
+   Reply exactly:
+
+   "This information is not available in the uploaded document. However, here's a general explanation."
+
+   Then answer using your general knowledge.
+
+6. Never invent facts about the uploaded document.
+
+7. Never say information exists in the document if it doesn't.
+
+==========================================================
+HOW TO EXPLAIN
+==========================================================
+
+Whenever possible, structure answers like this:
+
+Definition
+
+Explanation
+
+How it works
+
+Example
+
+Analogy (if helpful)
+
+Applications
+
+Advantages
+
+Disadvantages
+
+Summary
+
+==========================================================
+FOR PROGRAMMING OR TECHNICAL QUESTIONS
+==========================================================
+
+If the topic is technical (Java, Python, AI, ML, DBMS, OS, CN, Docker, Kubernetes, Cloud, etc.) explain:
+
+• Definition
+• Working
+• Architecture
+• Step-by-step process
+• Code example (if applicable)
+• Real-world example
+• Best practices
+• Common mistakes
+
+==========================================================
+STYLE
+==========================================================
+
+Always:
+
+• Use simple English.
+• Use headings.
+• Use bullet points.
+• Keep answers educational.
+• Be friendly like a teacher.
+• Answer follow-up questions naturally.
+
+Never refuse to explain something simply because the document only contains a short definition.
+
+Always help the student understand the concept deeply.
+"""
+
     messages = [
         {
             "role": "system",
-            "content": f"""
-You are an AI Study Assistant.
-
-Use the document below as your primary source of information.
-
-Instructions:
-- Answer based on the document.
-- Explain concepts in simple, easy-to-understand language.
-- If the user asks for an explanation, summary, analogy, or example, you may create a simple educational example based on the document.
-- Do NOT invent facts that contradict the document.
-- If the answer is genuinely not available in the document, reply exactly:
-"I couldn't find that information in the document."
-
-DOCUMENT:
-
-{context}
-"""
+            "content": system_prompt
         }
     ]
 
-    # Add previous conversation
     messages.extend(history)
 
-    # Add current user question
     messages.append(
         {
             "role": "user",
@@ -48,7 +145,36 @@ DOCUMENT:
         }
     )
 
-    # Call the LLM
+    return messages
+
+
+def ask_ai(question, context):
+    """
+    Returns the complete response as a string.
+    """
+
+    messages = build_messages(question, context)
+
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=messages
+    )
+
+    answer = response.choices[0].message.content
+
+    add_user_message(question)
+    add_ai_message(answer)
+
+    return answer
+
+
+def ask_ai_stream(question, context):
+    """
+    Streams the response token-by-token.
+    """
+
+    messages = build_messages(question, context)
+
     stream = client.chat.completions.create(
         model=MODEL,
         messages=messages,
@@ -57,8 +183,6 @@ DOCUMENT:
 
     full_response = ""
 
-    print("\nAI: ", end="", flush=True)
-
     for chunk in stream:
 
         if (
@@ -66,14 +190,12 @@ DOCUMENT:
             and chunk.choices[0].delta
             and chunk.choices[0].delta.content
         ):
-            text = chunk.choices[0].delta.content
-            full_response += text
-            print(text, end="", flush=True)
 
-    print()
+            token = chunk.choices[0].delta.content
 
-    # Save conversation history
+            full_response += token
+
+            yield token
+
     add_user_message(question)
     add_ai_message(full_response)
-
-    return full_response

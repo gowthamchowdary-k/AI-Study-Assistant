@@ -6,12 +6,10 @@ load_dotenv()
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-print("API Key Loaded:", OPENROUTER_API_KEY is not None)
-
-if OPENROUTER_API_KEY:
-    print("Starts with:", OPENROUTER_API_KEY[:10])
-else:
-    print("API Key NOT FOUND")
+if not OPENROUTER_API_KEY:
+    raise ValueError(
+        "OPENROUTER_API_KEY not found. Check your .env file."
+    )
 
 client = OpenAI(
     api_key=OPENROUTER_API_KEY,
