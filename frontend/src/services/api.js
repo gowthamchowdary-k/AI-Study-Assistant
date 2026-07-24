@@ -93,7 +93,7 @@ async function request(endpoint, options = {}) {
 // Chat
 // =======================
 
-export async function sendMessage(question) {
+export async function sendMessage(question, actionId = null) {
 
     return request("/chat", {
 
@@ -107,7 +107,8 @@ export async function sendMessage(question) {
 
         body: JSON.stringify({
 
-            question
+            question,
+            action_id: actionId
 
         })
 

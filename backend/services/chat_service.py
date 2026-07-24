@@ -1,5 +1,11 @@
+import logging
+
 from chatbot import ask_ai
 from search import search_chunks
+from formatter.response_formatter import ResponseFormatter
+from intent.intent_router import IntentRouter
+from prompts.prompt_manager import PromptManager
+from context_builder import ContextBuilder
 
 from memory import (
     save_context,
@@ -17,52 +23,42 @@ from utils import (
     is_greeting
 )
 
+# -------------------------------
+# FAISS relevance threshold
+# Smaller L2 distance = better match
+# -------------------------------
+RELEVANCE_THRESHOLD = 1.2
+INTENT_ROUTER = IntentRouter()
+PROMPT_MANAGER = PromptManager()
+FORMATTER = ResponseFormatter()
+CONTEXT_BUILDER = ContextBuilder()
+LOGGER = logging.getLogger(__name__)
+
 
 def build_context(results):
     """
-    Builds the document context sent to the LLM.
+    Uses the context builder to assemble a clean, deduplicated prompt context.
     """
 
-    context_parts = []
-    sources = []
-    seen = set()
-
-    for item in results:
-
-        context_parts.append(
-            f"""
-================================================
-
-Document : {item['file']}
-
-Page : {item['page']}
-
-Content:
-
-{item['text']}
-
-================================================
-"""
-        )
-
-        key = (
-            item["file"],
-            item["page"]
-        )
-
-        if key not in seen:
-
-            seen.add(key)
-
-            # Store only filename in SQLite
-            sources.append(item["file"])
-
-    context = "\n".join(context_parts)
-
-    return context, sources
+    context, sources, pages, chunk_ids = CONTEXT_BUILDER.build(results)
+    LOGGER.info("Built prompt context from %s retrieved chunks", len(chunk_ids))
+    return context, sources, pages
 
 
-def process_chat(question):
+def estimate_confidence(best_distance, retrieved_count=0, context_length=0):
+    """Converts retrieval distance into a bounded confidence score."""
+
+    if best_distance is None:
+        return 0.0
+
+    similarity_component = max(0.0, 1.0 - (best_distance / 2.0))
+    count_component = min(1.0, retrieved_count / 5.0)
+    completeness_component = min(1.0, context_length / 3000.0)
+    score = (similarity_component * 0.55) + (count_component * 0.20) + (completeness_component * 0.25)
+    return round(min(0.99, score), 2)
+
+
+def process_chat(question, action_id=None):
     """
     Main chat pipeline.
     """
@@ -72,22 +68,23 @@ def process_chat(question):
     if question == "":
         raise ValueError("Question is required.")
 
-    # Greeting
+    action = action_id or INTENT_ROUTER.classify(question)
 
     if is_greeting(question):
-
         return {
             "answer": "Hello! 👋 How can I help you today?",
             "sources": [],
-            "chunksRetrieved": 0
+            "chunksRetrieved": 0,
+            "action": action,
+            "title": "Welcome"
         }
-
-    # Follow-up
 
     if is_follow_up(question) and get_context():
 
         context = get_context()
         sources = get_sources()
+        pages = []
+        confidence = 0.0
 
     else:
 
@@ -101,27 +98,50 @@ def process_chat(question):
         )
 
         if not results:
-
+            LOGGER.warning("No retrieval results found for question: %s", question)
+            answer = "No document context available. Please upload and index a PDF before asking a document-grounded question."
             return {
-                "answer": "I couldn't find relevant information in the uploaded documents.",
+                "answer": answer,
                 "sources": [],
-                "chunksRetrieved": 0
+                "chunksRetrieved": 0,
+                "action": action,
+                "title": action.replace("_", " ").title(),
+                "summary": answer,
+                "confidence": 0.0,
+                "pages": []
             }
 
-        context, sources = build_context(results)
+        best_distance = results[0]["distance"]
+        print("\nBest FAISS Distance:", best_distance)
 
-        save_context(
-            context,
-            sources
-        )
+        LOGGER.info("Using retrieved PDF context for action=%s", action)
+        context, sources, pages = build_context(results)
+        confidence = estimate_confidence(best_distance, retrieved_count=len(results), context_length=len(context))
+        save_context(context, sources)
 
-    answer = ask_ai(
-        question,
-        context
+        if best_distance > RELEVANCE_THRESHOLD:
+            LOGGER.warning("Retrieval score %.4f exceeded relevance threshold %.4f; retaining document-grounded context with lower confidence.", best_distance, RELEVANCE_THRESHOLD)
+            confidence = min(confidence, 0.35)
+
+    prompt = PROMPT_MANAGER.get_prompt(action, context=context, question=question)
+    answer = ask_ai(question, context, action=action)
+
+    structured = FORMATTER.format(
+        title=action.replace("_", " ").title(),
+        answer=answer,
+        sources=sources,
+        confidence=confidence,
+        pages=pages,
+        follow_up_questions=["What would you like to study next?"],
+        study_tips=["Review the relevant pages and test the concept with a follow-up question."],
     )
 
-    return {
+    structured.update({
         "answer": answer,
         "sources": sources,
-        "chunksRetrieved": len(sources)
-    }
+        "chunksRetrieved": len(sources),
+        "action": action,
+        "prompt": prompt
+    })
+
+    return structured

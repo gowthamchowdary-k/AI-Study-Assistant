@@ -1,63 +1,53 @@
-import os
 import glob
-from search import search_chunks
-from memory import (
-    save_context,
-    get_context,
-    get_sources
-)
+import logging
+import os
 
 from core.app_state import app_state
-
-from pdf_reader import read_pdf
-from splitter import split_text
 from embeddings import create_embeddings
 from faiss_db import create_faiss_index
-
+from pdf_reader import read_pdf
+from rag.document_processor import DocumentProcessor
+from search import search_chunks
+from splitter import split_text
 from vector_store import (
-    save_vector_store,
+    get_upload_folder,
     load_vector_store,
+    save_vector_store,
     vector_store_exists,
-    get_upload_folder
 )
 
-
+LOGGER = logging.getLogger(__name__)
 UPLOAD_FOLDER = get_upload_folder()
 
 
 def build_vector_database():
     """
-    Reads every uploaded PDF,
-    creates embeddings,
-    builds the FAISS index,
-    and stores everything.
+    Reads every uploaded PDF, extracts text, cleans it, chunks it, embeds it,
+    and stores the FAISS index and chunk metadata.
     """
 
-    pdf_files = glob.glob(
-        os.path.join(
-            UPLOAD_FOLDER,
-            "*.pdf"
-        )
-    )
+    pdf_files = glob.glob(os.path.join(UPLOAD_FOLDER, "*.pdf"))
 
     if not pdf_files:
         raise Exception("No PDF files found.")
 
+    processor = DocumentProcessor()
     all_pages = []
 
     for pdf in pdf_files:
-
         print(f"Reading {os.path.basename(pdf)}")
-
         pages = read_pdf(pdf)
-
-        all_pages.extend(pages)
+        cleaned_pages = processor.clean_text_pages(pages)
+        all_pages.extend(cleaned_pages)
 
     chunks = split_text(all_pages)
+    LOGGER.info("Chunked %s pages into %s chunks", len(all_pages), len(chunks))
 
     embeddings = create_embeddings(chunks)
+    LOGGER.info("Created %s embeddings", len(embeddings))
 
     index = create_faiss_index(embeddings)
+    LOGGER.info("Built FAISS index with %s entries", index.ntotal)
 
     save_vector_store(index, chunks)
 

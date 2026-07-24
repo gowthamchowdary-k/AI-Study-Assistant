@@ -34,9 +34,12 @@ def chat():
             }), 400
 
         question = data.get("question", "").strip()
+        action_id = data.get("action_id") or data.get("action") or None
 
         print(f"\n👤 User Question:")
         print(question)
+        print(f"🧭 Action ID:")
+        print(action_id)
 
         if not question:
             print("❌ Empty question")
@@ -47,7 +50,7 @@ def chat():
 
         print("\n⏳ Calling process_chat()...")
 
-        result = process_chat(question)
+        result = process_chat(question, action_id=action_id)
 
         print("\n✅ process_chat() completed successfully")
 

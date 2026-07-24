@@ -8,7 +8,15 @@ export default function ChatWindow({
 
     messages = [],
 
-    loading = false
+    loading = false,
+
+    onSuggestionClick,
+
+    onUploadClick,
+
+    onAskClick,
+
+    onLearnClick
 
 }) {
 
@@ -42,7 +50,17 @@ export default function ChatWindow({
 
                 messages.length === 0 ? (
 
-                    <EmptyState />
+                    <EmptyState
+
+                        onSuggestionClick={onSuggestionClick}
+
+                        onUploadClick={onUploadClick}
+
+                        onAskClick={onAskClick}
+
+                        onLearnClick={onLearnClick}
+
+                    />
 
                 ) : (
 

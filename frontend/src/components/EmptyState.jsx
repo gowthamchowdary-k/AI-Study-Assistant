@@ -7,7 +7,17 @@ import {
     FiZap
 } from "react-icons/fi";
 
-export default function EmptyState({ onSuggestionClick }) {
+export default function EmptyState({
+
+    onSuggestionClick,
+
+    onUploadClick,
+
+    onAskClick,
+
+    onLearnClick
+
+}) {
 
     const suggestions = [
         "Summarize this PDF",
@@ -75,94 +85,153 @@ export default function EmptyState({ onSuggestionClick }) {
 
                 </p>
 
+                {/* Top Suggestions */}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
 
-                    {suggestions.map((item) => (
+                    {
 
-                        <button
+                        suggestions.map((item) => (
 
-                            key={item}
+                            <button
 
-                            onClick={() => onSuggestionClick?.(item)}
+                                key={item}
 
-                            className="
-                                border
-                                rounded-xl
-                                px-5
-                                py-4
-                                text-left
-                                hover:bg-blue-50
-                                hover:border-blue-300
-                                transition
-                                shadow-sm
-                            "
+                                onClick={() => onSuggestionClick?.(item)}
 
-                        >
+                                className="
+                                    border
+                                    rounded-xl
+                                    px-5
+                                    py-4
+                                    text-left
+                                    hover:bg-blue-50
+                                    hover:border-blue-300
+                                    hover:shadow-md
+                                    transition
+                                "
 
-                            <div className="flex items-center gap-3">
+                            >
 
-                                <FiZap className="text-blue-600" />
+                                <div className="flex items-center gap-3">
 
-                                <span className="font-medium">
+                                    <FiZap className="text-blue-600" />
 
-                                    {item}
+                                    <span className="font-medium">
 
-                                </span>
+                                        {item}
 
-                            </div>
+                                    </span>
 
-                        </button>
+                                </div>
 
-                    ))}
+                            </button>
+
+                        ))
+
+                    }
 
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 mt-10 text-gray-500">
+                {/* Bottom Actions */}
 
-                    <div className="flex flex-col items-center">
+                <div className="grid grid-cols-3 gap-4 mt-10">
+
+                    <button
+
+                        onClick={onUploadClick}
+
+                        className="
+                            flex
+                            flex-col
+                            items-center
+                            p-4
+                            rounded-xl
+                            hover:bg-blue-50
+                            transition
+                        "
+
+                    >
 
                         <FiFileText
-                            size={26}
+
+                            size={28}
+
                             className="mb-2 text-blue-600"
+
                         />
 
-                        <span className="text-sm">
+                        <span className="text-sm font-medium text-gray-600">
 
                             Upload PDFs
 
                         </span>
 
-                    </div>
+                    </button>
 
-                    <div className="flex flex-col items-center">
+                    <button
+
+                        onClick={onAskClick}
+
+                        className="
+                            flex
+                            flex-col
+                            items-center
+                            p-4
+                            rounded-xl
+                            hover:bg-green-50
+                            transition
+                        "
+
+                    >
 
                         <FiHelpCircle
-                            size={26}
+
+                            size={28}
+
                             className="mb-2 text-green-600"
+
                         />
 
-                        <span className="text-sm">
+                        <span className="text-sm font-medium text-gray-600">
 
                             Ask Questions
 
                         </span>
 
-                    </div>
+                    </button>
 
-                    <div className="flex flex-col items-center">
+                    <button
+
+                        onClick={onLearnClick}
+
+                        className="
+                            flex
+                            flex-col
+                            items-center
+                            p-4
+                            rounded-xl
+                            hover:bg-purple-50
+                            transition
+                        "
+
+                    >
 
                         <FiClipboard
-                            size={26}
+
+                            size={28}
+
                             className="mb-2 text-purple-600"
+
                         />
 
-                        <span className="text-sm">
+                        <span className="text-sm font-medium text-gray-600">
 
                             Learn Faster
 
                         </span>
 
-                    </div>
+                    </button>
 
                 </div>
 

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import DocumentList from "./DocumentList";
 
 export default function Sidebar({
@@ -7,15 +7,29 @@ export default function Sidebar({
 
     upload,
 
-    remove
+    remove,
+
+    uploadTrigger
 
 }) {
 
-    const fileInput = useRef();
+    const fileInput = useRef(null);
 
     function chooseFile() {
-        fileInput.current.click();
+
+        fileInput.current?.click();
+
     }
+
+    useEffect(() => {
+
+        if (uploadTrigger) {
+
+            uploadTrigger.current = chooseFile;
+
+        }
+
+    }, [uploadTrigger]);
 
     async function handleFile(event) {
 
@@ -23,9 +37,17 @@ export default function Sidebar({
 
         if (!file) return;
 
-        await upload(file);
+        try {
 
-        event.target.value = "";
+            await upload(file);
+
+        }
+
+        finally {
+
+            event.target.value = "";
+
+        }
 
     }
 
@@ -70,15 +92,15 @@ export default function Sidebar({
 
             <input
 
+                ref={fileInput}
+
                 type="file"
 
                 accept=".pdf"
 
-                ref={fileInput}
+                hidden
 
                 onChange={handleFile}
-
-                hidden
 
             />
 

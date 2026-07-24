@@ -1,14 +1,32 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export default function MessageInput({
 
     onSend,
 
-    loading
+    loading,
+
+    inputFocusRef
 
 }) {
 
     const [text, setText] = useState("");
+
+    const textareaRef = useRef(null);
+
+    useEffect(() => {
+
+        if (inputFocusRef) {
+
+            inputFocusRef.current = () => {
+
+                textareaRef.current?.focus();
+
+            };
+
+        }
+
+    }, [inputFocusRef]);
 
     function handleSubmit(e) {
 
@@ -19,6 +37,8 @@ export default function MessageInput({
         onSend(text.trim());
 
         setText("");
+
+        textareaRef.current?.focus();
 
     }
 
@@ -41,6 +61,8 @@ export default function MessageInput({
         >
 
             <textarea
+
+                ref={textareaRef}
 
                 rows={1}
 

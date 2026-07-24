@@ -45,7 +45,7 @@ export default function useChat() {
 
     }
 
-    async function ask(question) {
+    async function ask(question, actionId = null) {
 
         const text = question.trim();
 
@@ -73,7 +73,7 @@ export default function useChat() {
 
         try {
 
-            const response = await sendMessage(text);
+            const response = await sendMessage(text, actionId);
 
             const assistantMessage = {
 

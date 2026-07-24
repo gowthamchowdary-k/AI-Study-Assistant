@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import toast from "react-hot-toast";
 
 import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
@@ -30,9 +31,67 @@ export default function StudyBuddyPage() {
 
     const [showSidebar, setShowSidebar] = useState(false);
 
-    // Called when a suggestion card is clicked
+    // Shared refs
+    const uploadTrigger = useRef(null);
+    const inputFocusRef = useRef(null);
+
+    // Top suggestion cards
     const handleSuggestionClick = (prompt) => {
-        ask(prompt);
+
+        if (documents.length === 0) {
+
+            toast.error("Please upload at least one PDF first.");
+
+            return;
+
+        }
+
+        let actionId = "general";
+
+        if (prompt.toLowerCase().includes("mcq")) {
+            actionId = "generate_mcqs";
+        } else if (prompt.toLowerCase().includes("summarize")) {
+            actionId = "summary";
+        } else if (prompt.toLowerCase().includes("explain")) {
+            actionId = "explain";
+        } else if (prompt.toLowerCase().includes("topic")) {
+            actionId = "notes";
+        }
+
+        ask(prompt, actionId);
+
+    };
+
+    // Upload PDFs
+    const handleUploadClick = () => {
+
+        uploadTrigger.current?.();
+
+    };
+
+    // Ask Questions
+    const handleAskClick = () => {
+
+        inputFocusRef.current?.();
+
+    };
+
+    // Learn Faster
+    const handleLearnClick = () => {
+
+        if (documents.length === 0) {
+
+            toast.error("Please upload at least one PDF first.");
+
+            return;
+
+        }
+
+        ask(
+            "Create a complete study guide from the uploaded PDF including summary, important topics, chapter-wise notes, important formulas, interview questions, MCQs with answers, revision plan, and exam tips.",
+            "summary"
+        );
+
     };
 
     return (
@@ -71,6 +130,7 @@ export default function StudyBuddyPage() {
                         documents={documents}
                         upload={upload}
                         remove={remove}
+                        uploadTrigger={uploadTrigger}
                     />
 
                 </div>
@@ -95,6 +155,7 @@ export default function StudyBuddyPage() {
                                     documents={documents}
                                     upload={upload}
                                     remove={remove}
+                                    uploadTrigger={uploadTrigger}
                                 />
 
                             </div>
@@ -146,11 +207,15 @@ export default function StudyBuddyPage() {
                         messages={messages}
                         loading={loading}
                         onSuggestionClick={handleSuggestionClick}
+                        onUploadClick={handleUploadClick}
+                        onAskClick={handleAskClick}
+                        onLearnClick={handleLearnClick}
                     />
 
                     <MessageInput
                         onSend={ask}
                         loading={loading}
+                        inputFocusRef={inputFocusRef}
                     />
 
                 </main>

@@ -1,132 +1,43 @@
-from config import client
+import time
 from memory import (
     get_history,
     add_user_message,
     add_ai_message
 )
+from prompts.prompt_manager import PromptManager
+from providers.provider_factory import get_provider
 
-MODEL = "openrouter/free"
+PROMPT_MANAGER = PromptManager()
 
 
-def build_messages(question, context):
+def build_messages(question, context, action="general", prompt_override=None):
     """
     Builds the message list sent to the LLM.
     """
 
     history = get_history()[-6:]
+    prompt = prompt_override or PROMPT_MANAGER.get_prompt(action, context=context, question=question)
 
     system_prompt = f"""
-You are an intelligent AI Study Assistant.
+You are a production-grade AI Learning Platform assistant.
 
-Your job is to help students understand concepts clearly, accurately, and naturally.
+Use document-grounded reasoning as the primary source.
 
-==========================================================
-PRIMARY SOURCE
-==========================================================
-
-The uploaded document is your PRIMARY source of information.
+Action: {action}
 
 Document Context:
 
 {context}
 
-==========================================================
-RULES
-==========================================================
+Instructions:
+{prompt}
 
-1. Always use the uploaded document as the primary reference.
-
-2. If the answer exists in the document:
-   - Answer using the document.
-   - Explain it in simple language.
-
-3. If the user asks:
-   - Explain
-   - Why
-   - How
-   - Example
-   - Analogy
-   - Real-world application
-   - Advantages
-   - Disadvantages
-   - Interview questions
-
-   You may use your own general knowledge to improve the explanation,
-   but NEVER contradict the document.
-
-4. If only part of the answer exists in the document:
-   - First explain what the document says.
-   - Then clearly mention:
-     "Additional explanation based on general knowledge:"
-   - Continue the explanation.
-
-5. If the answer is completely unrelated to the uploaded document:
-
-   Reply exactly:
-
-   "This information is not available in the uploaded document. However, here's a general explanation."
-
-   Then answer using your general knowledge.
-
-6. Never invent facts about the uploaded document.
-
-7. Never say information exists in the document if it doesn't.
-
-==========================================================
-HOW TO EXPLAIN
-==========================================================
-
-Whenever possible, structure answers like this:
-
-Definition
-
-Explanation
-
-How it works
-
-Example
-
-Analogy (if helpful)
-
-Applications
-
-Advantages
-
-Disadvantages
-
-Summary
-
-==========================================================
-FOR PROGRAMMING OR TECHNICAL QUESTIONS
-==========================================================
-
-If the topic is technical (Java, Python, AI, ML, DBMS, OS, CN, Docker, Kubernetes, Cloud, etc.) explain:
-
-• Definition
-• Working
-• Architecture
-• Step-by-step process
-• Code example (if applicable)
-• Real-world example
-• Best practices
-• Common mistakes
-
-==========================================================
-STYLE
-==========================================================
-
-Always:
-
-• Use simple English.
-• Use headings.
-• Use bullet points.
-• Keep answers educational.
-• Be friendly like a teacher.
-• Answer follow-up questions naturally.
-
-Never refuse to explain something simply because the document only contains a short definition.
-
-Always help the student understand the concept deeply.
+Rules:
+1. Use the uploaded document as the primary reference.
+2. If the answer is not present in the document, clearly mark it as general knowledge.
+3. Never invent document facts.
+4. Keep the answer structured, educational, and easy to follow.
+5. Prefer concise, accurate and clearly cited explanations.
 """
 
     messages = [
@@ -148,19 +59,18 @@ Always help the student understand the concept deeply.
     return messages
 
 
-def ask_ai(question, context):
+def ask_ai(question, context, action="general"):
     """
     Returns the complete response as a string.
     """
 
-    messages = build_messages(question, context)
+    messages = build_messages(question, context, action=action)
 
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=messages
-    )
-
-    answer = response.choices[0].message.content
+    try:
+        provider = get_provider()
+        answer = provider.generate(messages)
+    except RuntimeError as exc:
+        raise ValueError(str(exc)) from exc
 
     add_user_message(question)
     add_ai_message(answer)
@@ -168,34 +78,38 @@ def ask_ai(question, context):
     return answer
 
 
-def ask_ai_stream(question, context):
+def ask_ai_stream(question, context, action="general"):
     """
     Streams the response token-by-token.
     """
 
-    messages = build_messages(question, context)
+    messages = build_messages(question, context, action=action)
 
-    stream = client.chat.completions.create(
-        model=MODEL,
-        messages=messages,
-        stream=True
-    )
+    try:
+        provider = get_provider()
+
+        print("=" * 80)
+        print("Model:", provider.model)
+        print("Messages:", len(messages))
+        print("System Prompt Length:", len(messages[0]["content"]))
+        print("=" * 80)
+
+        start = time.time()
+
+        answer = provider.generate(messages)
+
+        print("=" * 80)
+        print("Gemini Response Time:", round(time.time() - start, 2), "seconds")
+        print("=" * 80)
+
+    except RuntimeError as exc:
+        raise ValueError(str(exc)) from exc
 
     full_response = ""
 
-    for chunk in stream:
-
-        if (
-            chunk.choices
-            and chunk.choices[0].delta
-            and chunk.choices[0].delta.content
-        ):
-
-            token = chunk.choices[0].delta.content
-
-            full_response += token
-
-            yield token
+    for token in stream:
+        full_response += token
+        yield token
 
     add_user_message(question)
     add_ai_message(full_response)
