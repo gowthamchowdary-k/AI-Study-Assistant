@@ -1,3 +1,4 @@
+from fileinput import filename
 import os
 import traceback
 
@@ -37,18 +38,41 @@ def upload_pdf(file):
         filename
     )
 
-    if os.path.exists(save_path):
+    # Allow only one PDF at a time
+    existing_pdfs = [
+        f for f in os.listdir(UPLOAD_FOLDER)
+        if f.lower().endswith(".pdf")
+    ]
+
+    if existing_pdfs:
         raise ValueError(
-            f'"{filename}" has already been uploaded.'
+            f'A PDF ("{existing_pdfs[0]}") is already loaded. '
+            'Please delete the existing PDF before uploading a new one.'
         )
 
     try:
-        # Save the PDF
+
+        # Remove all previously uploaded PDFs
+        for existing_file in os.listdir(UPLOAD_FOLDER):
+
+            if existing_file.lower().endswith(".pdf"):
+
+                os.remove(
+                    os.path.join(
+                        UPLOAD_FOLDER,
+                        existing_file
+                    )
+                )
+
+        # Clear old vector database
+        clear_vector_store()
+
+        # Save the new PDF
         file.save(save_path)
+
         print(f"Uploaded: {filename}")
 
-        # Rebuild the vector database
-        clear_vector_store()
+        # Rebuild vector database
         rebuild_vector_database()
 
         print("Vector database rebuilt successfully.")

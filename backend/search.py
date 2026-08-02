@@ -1,5 +1,5 @@
 from embeddings import model
-
+from collections import defaultdict 
 
 def similarity_from_distance(distance):
     """Convert L2 distance into a 0..1 similarity score."""
@@ -11,10 +11,16 @@ def similarity_from_distance(distance):
     return round(similarity, 4)
 
 
-def search_chunks(question, index, chunks, k=5):
+def search_chunks(question, index, chunks,
+                  retrieve_k=30,
+                  max_chunks_per_document=3):
     """
-    Searches the FAISS index and returns the most relevant,
-    unique chunks with document metadata and similarity score.
+    Commercial-grade retrieval.
+
+    1. Retrieve many chunks.
+    2. Group by PDF.
+    3. Keep best chunks from EACH PDF.
+    4. Return balanced multi-document context.
     """
 
     question_embedding = model.encode(
@@ -22,20 +28,26 @@ def search_chunks(question, index, chunks, k=5):
         convert_to_numpy=True
     ).astype("float32")
 
-    distances, indices = index.search(question_embedding, k)
+    distances, indices = index.search(
+        question_embedding,
+        retrieve_k
+    )
 
-    results = []
+    grouped = defaultdict(list)
+
     seen = set()
 
     for distance, idx in zip(distances[0], indices[0]):
+
         if idx == -1:
             continue
 
         chunk = chunks[idx]
+
         key = (
-            chunk.get("file"),
-            chunk.get("page"),
-            chunk.get("text")
+            chunk["file"],
+            chunk["page"],
+            chunk["text"]
         )
 
         if key in seen:
@@ -43,24 +55,53 @@ def search_chunks(question, index, chunks, k=5):
 
         seen.add(key)
 
-        results.append({
+        grouped[chunk["file"]].append({
+
             "chunk_id": chunk.get("chunk_id"),
-            "text": chunk.get("text"),
-            "file": chunk.get("file"),
-            "page": chunk.get("page"),
-            "distance": round(float(distance), 4),
+
+            "text": chunk["text"],
+
+            "file": chunk["file"],
+
+            "page": chunk["page"],
+
+            "distance": round(float(distance),4),
+
             "similarity": similarity_from_distance(distance),
+
             "chapter": chunk.get("chapter"),
+
             "heading": chunk.get("heading"),
+
             "keywords": chunk.get("keywords", []),
+
             "summary": chunk.get("summary")
         })
 
-    print("\n========== Search Results ==========")
-    for r in results:
-        print(
-            f"{r['file']} | Page {r['page']} | Distance = {r['distance']} | Similarity = {r['similarity']}"
+
+    results = []
+
+    print("\n========== MULTI DOCUMENT SEARCH ==========")
+
+    for document in grouped:
+
+    # Sort chunks inside each document
+        grouped[document].sort(
+            key=lambda x: x["distance"]
         )
-    print("====================================\n")
+
+    # Keep only best chunks from that PDF
+        selected = grouped[document][:max_chunks_per_document]
+
+        results.extend(selected)
+
+        print(f"{document} -> {len(selected)} chunks")
+
+# Finally sort all selected chunks
+    results.sort(
+        key=lambda x: x["distance"]
+    )
+
+    print("===========================================")
 
     return results

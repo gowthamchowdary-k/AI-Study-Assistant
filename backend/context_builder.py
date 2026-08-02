@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, List, Tuple
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -43,12 +44,13 @@ class ContextBuilder:
     def build(self, results: List[Dict[str, Any]]) -> Tuple[str, List[str], List[int], List[str]]:
         ordered_results = self._deduplicate(results)[: self.max_chunks]
 
-        context_parts: List[str] = []
-        sources: List[str] = []
-        pages: List[int] = []
-        chunk_ids: List[str] = []
+        context_parts = []
+        sources = []
+        pages = []
+        chunk_ids = []
 
         for item in ordered_results:
+
             chunk_text = str(item.get("text", "")).strip()
             if not chunk_text:
                 continue
@@ -59,12 +61,12 @@ class ContextBuilder:
 
             context_parts.append(
                 f"""
-Document: {file_name}
-Page: {page_number}
-Chunk ID: {chunk_id}
+        Document: {file_name}
+        Page: {page_number}
+        Chunk ID: {chunk_id}
 
-{chunk_text}
-"""
+        {chunk_text}
+        """
             )
 
             if file_name not in sources:

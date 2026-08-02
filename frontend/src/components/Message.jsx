@@ -1,5 +1,9 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
+
 import { FiCopy, FiCheck } from "react-icons/fi";
 import { useState } from "react";
 import CodeBlock from "./CodeBlock";
@@ -129,7 +133,8 @@ export default function Message({ message }) {
 
                             <ReactMarkdown
 
-                                remarkPlugins={[remarkGfm]}
+                                remarkPlugins={[remarkGfm, remarkMath]}
+                                rehypePlugins={[rehypeKatex]}
 
                                 components={{
 

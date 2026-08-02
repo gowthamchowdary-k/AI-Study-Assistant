@@ -91,11 +91,18 @@ def process_chat(question, action_id=None):
         index = get_index()
         chunks = get_chunks()
 
+
+
         results = search_chunks(
             question,
             index,
-            chunks
+            chunks,
+            retrieve_k=30,
+            max_chunks_per_document=3
         )
+        filtered = []
+        if filtered:
+            results = filtered
 
         if not results:
             LOGGER.warning("No retrieval results found for question: %s", question)

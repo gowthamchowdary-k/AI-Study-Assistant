@@ -68,7 +68,7 @@ export default function Sidebar({
         >
 
             <h2 className="text-lg md:text-xl font-semibold mb-4">
-                📄 Documents
+                📄 Document
             </h2>
 
             <button

@@ -35,10 +35,22 @@ def build_vector_database():
     all_pages = []
 
     for pdf in pdf_files:
-        print(f"Reading {os.path.basename(pdf)}")
+
+        print(f"\nReading: {os.path.basename(pdf)}")
+
         pages = read_pdf(pdf)
+
+        print(f"Pages extracted: {len(pages)}")
+
         cleaned_pages = processor.clean_text_pages(pages)
+
+        print(f"Pages after cleaning: {len(cleaned_pages)}")
+
         all_pages.extend(cleaned_pages)
+
+    print("\n================================")
+    print("TOTAL PAGES:", len(all_pages))
+    print("================================")
 
     chunks = split_text(all_pages)
     LOGGER.info("Chunked %s pages into %s chunks", len(all_pages), len(chunks))

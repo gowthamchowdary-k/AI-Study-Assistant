@@ -8,7 +8,7 @@ export default function Header() {
                 </h1>
 
                 <p className="mt-1 text-xs sm:text-sm md:text-base text-blue-100">
-                    Ask questions from your uploaded PDFs
+                    Ask questions from your uploaded PDF
                 </p>
 
             </div>
