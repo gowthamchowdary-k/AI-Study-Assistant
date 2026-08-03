@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import {
-    FiBook,
     FiFileText,
     FiHelpCircle,
     FiClipboard,
@@ -20,7 +19,7 @@ export default function EmptyState({
 }) {
 
     const suggestions = [
-        "Summarize Docs",
+        "Summarize PDF",
         "Generate Notes",
         "Generate Quiz",
         "Explain Concepts"
@@ -67,7 +66,7 @@ export default function EmptyState({
                     "
                 >
 
-                    <FiBook
+                    <FiFileText
                         size={40}
                         className="text-blue-600"
                     />
@@ -84,11 +83,9 @@ export default function EmptyState({
 
                 {/* Subtitle */}
 
-                <p className="text-gray-500 mt-3 text-base leading-7">
+                <p className="text-gray-500 mt-3 text-sm leading-6">
 
-                    Upload study materials and interact with them using AI.
-                    Ask questions, generate summaries, notes,
-                    quizzes, and explore concepts effortlessly.
+                    Upload a PDF and interact with it using AI. Ask questions, generate summaries, notes, quizzes, and explore concepts effortlessly.
 
                 </p>
 
@@ -170,7 +167,7 @@ export default function EmptyState({
 
                         <span className="text-sm font-medium text-gray-600">
 
-                            Upload Materials
+                            Upload PDF
 
                         </span>
 

@@ -94,7 +94,7 @@ export default function Sidebar({
                 "
 
             >
-                Upload Materials
+                Upload PDF
             </button>
 
             <input
@@ -129,23 +129,11 @@ export default function Sidebar({
 
             <div className="mt-6 pt-4 border-t text-center">
 
-    <p className="text-xs text-gray-500 mb-2">
-        Developed by
-    </p>
+                <p className="text-[11px] text-gray-400">
+                    AI Study Assistant v1.0
+                </p>
 
-    <p className="text-x text-gray-700 leading-6">
-        Kunta Gowtham Chowdary
-        <br />
-        &
-        <br />
-        Nukavarapu Eswar Chowdary
-    </p>
-
-    <p className="text-[11px] text-gray-400 mt-3">
-        AI Study Assistant v1.0
-    </p>
-
-</div>
+            </div>
 
         </aside>
 

@@ -42,7 +42,7 @@ export default function StudyBuddyPage({ user, onLogout }) {
 
         if (documents.length === 0) {
 
-            toast.error("Please upload study materials first.");
+            toast.error("Please upload a PDF first.");
 
             return;
 
@@ -83,14 +83,14 @@ export default function StudyBuddyPage({ user, onLogout }) {
 
         if (documents.length === 0) {
 
-            toast.error("Please upload study materials first.");
+            toast.error("Please upload a PDF first.");
 
             return;
 
         }
 
         ask(
-            "Create a complete study guide from the uploaded materials including summary, important topics, chapter-wise notes, important formulas, interview questions, MCQs with answers, revision plan, and exam tips.",
+            "Create a complete study guide from the uploaded PDF including summary, important topics, chapter-wise notes, important formulas, interview questions, MCQs with answers, revision plan, and exam tips.",
             "summary"
         );
 
