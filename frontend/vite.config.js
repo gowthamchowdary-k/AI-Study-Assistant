@@ -24,7 +24,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      "/auth": backendProxy("/auth"),
       "/chat": backendProxy("/chat"),
+      "/upload": backendProxy("/upload"),
+      "/documents": backendProxy("/documents"),
       "/health": backendProxy("/health"),
       "/reset": backendProxy("/reset"),
     },

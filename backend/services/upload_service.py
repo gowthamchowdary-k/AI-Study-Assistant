@@ -1,27 +1,22 @@
-from fileinput import filename
 import os
 import traceback
 
 from vector_store import (
-    get_upload_folder,
+    get_user_upload_folder,
     clear_vector_store
 )
-
 from services.rag_service import rebuild_vector_database
 from utils import (
     allowed_file,
     clean_filename
 )
 
-UPLOAD_FOLDER = get_upload_folder()
 
-
-def upload_pdf(file):
+def upload_document(file, user_id):
     """
-    Validates and uploads a PDF.
-    Automatically rebuilds the vector database.
+    Validates and uploads a study material (PDF, DOCX, PPTX, TXT, Images).
+    Automatically rebuilds the vector database for the user.
     """
-
     if file is None:
         raise ValueError("No file uploaded.")
 
@@ -29,65 +24,34 @@ def upload_pdf(file):
         raise ValueError("No file selected.")
 
     if not allowed_file(file.filename):
-        raise ValueError("Only PDF files are allowed.")
-
-    filename = clean_filename(file.filename)
-
-    save_path = os.path.join(
-        UPLOAD_FOLDER,
-        filename
-    )
-
-    # Allow only one PDF at a time
-    existing_pdfs = [
-        f for f in os.listdir(UPLOAD_FOLDER)
-        if f.lower().endswith(".pdf")
-    ]
-
-    if existing_pdfs:
         raise ValueError(
-            f'A PDF ("{existing_pdfs[0]}") is already loaded. '
-            'Please delete the existing PDF before uploading a new one.'
+            "Unsupported file format. Allowed formats: PDF, DOCX, PPTX, TXT, and common Images (PNG, JPG, JPEG, WEBP)."
         )
 
+    filename = clean_filename(file.filename)
+    user_upload_folder = get_user_upload_folder(user_id)
+    save_path = os.path.join(user_upload_folder, filename)
+
     try:
-
-        # Remove all previously uploaded PDFs
-        for existing_file in os.listdir(UPLOAD_FOLDER):
-
-            if existing_file.lower().endswith(".pdf"):
-
-                os.remove(
-                    os.path.join(
-                        UPLOAD_FOLDER,
-                        existing_file
-                    )
-                )
-
-        # Clear old vector database
-        clear_vector_store()
-
-        # Save the new PDF
+        # Save the new document (overwriting existing file with the same name if it exists)
         file.save(save_path)
+        print(f"Uploaded: {filename} for user {user_id}")
 
-        print(f"Uploaded: {filename}")
-
-        # Rebuild vector database
-        rebuild_vector_database()
-
-        print("Vector database rebuilt successfully.")
+        # Clear old vector database and rebuild it incorporating all current documents
+        clear_vector_store(user_id)
+        rebuild_vector_database(user_id)
+        print(f"Vector database rebuilt successfully for user {user_id}.")
 
         return filename
 
     except Exception as e:
-
         # Remove the uploaded file if indexing fails
         if os.path.exists(save_path):
             os.remove(save_path)
 
         print("=" * 60)
-        print("UPLOAD FAILED")
+        print(f"UPLOAD FAILED FOR USER {user_id}")
         traceback.print_exc()
         print("=" * 60)
 
-        raise Exception(f"Failed to index PDF: {e}")
+        raise Exception(f"Failed to process and index document: {e}")

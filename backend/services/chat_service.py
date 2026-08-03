@@ -58,9 +58,9 @@ def estimate_confidence(best_distance, retrieved_count=0, context_length=0):
     return round(min(0.99, score), 2)
 
 
-def process_chat(question, action_id=None):
+def process_chat(question, action_id=None, user_id=1):
     """
-    Main chat pipeline.
+    Main chat pipeline, isolated by user_id.
     """
 
     question = question.strip()
@@ -79,19 +79,29 @@ def process_chat(question, action_id=None):
             "title": "Welcome"
         }
 
-    if is_follow_up(question) and get_context():
-
-        context = get_context()
-        sources = get_sources()
+    # Retrieve context
+    if is_follow_up(question) and get_context(user_id):
+        context = get_context(user_id)
+        sources = get_sources(user_id)
         pages = []
         confidence = 0.0
-
     else:
+        index = get_index(user_id)
+        chunks = get_chunks(user_id)
 
-        index = get_index()
-        chunks = get_chunks()
-
-
+        if not index or not chunks:
+            LOGGER.warning("No retrieval index or chunks found for user: %s", user_id)
+            answer = "No document context available. Please upload study materials before asking questions."
+            return {
+                "answer": answer,
+                "sources": [],
+                "chunksRetrieved": 0,
+                "action": action,
+                "title": action.replace("_", " ").title(),
+                "summary": answer,
+                "confidence": 0.0,
+                "pages": []
+            }
 
         results = search_chunks(
             question,
@@ -100,13 +110,10 @@ def process_chat(question, action_id=None):
             retrieve_k=30,
             max_chunks_per_document=3
         )
-        filtered = []
-        if filtered:
-            results = filtered
 
         if not results:
-            LOGGER.warning("No retrieval results found for question: %s", question)
-            answer = "No document context available. Please upload and index a PDF before asking a document-grounded question."
+            LOGGER.warning("No retrieval results found for user: %s", user_id)
+            answer = "No matching document context found. Please try a different query."
             return {
                 "answer": answer,
                 "sources": [],
@@ -121,17 +128,17 @@ def process_chat(question, action_id=None):
         best_distance = results[0]["distance"]
         print("\nBest FAISS Distance:", best_distance)
 
-        LOGGER.info("Using retrieved PDF context for action=%s", action)
+        LOGGER.info("Using retrieved document context for user=%s, action=%s", user_id, action)
         context, sources, pages = build_context(results)
         confidence = estimate_confidence(best_distance, retrieved_count=len(results), context_length=len(context))
-        save_context(context, sources)
+        save_context(context, user_id, sources)
 
         if best_distance > RELEVANCE_THRESHOLD:
-            LOGGER.warning("Retrieval score %.4f exceeded relevance threshold %.4f; retaining document-grounded context with lower confidence.", best_distance, RELEVANCE_THRESHOLD)
+            LOGGER.warning("Retrieval score %.4f exceeded relevance threshold %.4f; retaining context with lower confidence.", best_distance, RELEVANCE_THRESHOLD)
             confidence = min(confidence, 0.35)
 
     prompt = PROMPT_MANAGER.get_prompt(action, context=context, question=question)
-    answer = ask_ai(question, context, action=action)
+    answer = ask_ai(question, context, user_id, action=action)
 
     structured = FORMATTER.format(
         title=action.replace("_", " ").title(),

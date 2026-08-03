@@ -50,12 +50,12 @@ def format_math(answer: str) -> str:
     return answer
 
 
-def build_messages(question, context, action="general", prompt_override=None):
+def build_messages(question, context, user_id, action="general", prompt_override=None):
     """
     Builds the message list sent to the LLM.
     """
 
-    history = get_history()[-6:]
+    history = get_history(user_id)[-6:]
 
     prompt = prompt_override or PROMPT_MANAGER.get_prompt(
         action,
@@ -152,7 +152,7 @@ without $$ delimiters.
     return messages
 
 
-def ask_ai(question, context, action="general"):
+def ask_ai(question, context, user_id, action="general"):
     """
     Returns the complete response.
     """
@@ -160,6 +160,7 @@ def ask_ai(question, context, action="general"):
     messages = build_messages(
         question,
         context,
+        user_id,
         action=action
     )
 
@@ -175,13 +176,13 @@ def ask_ai(question, context, action="general"):
 
         raise ValueError(str(exc)) from exc
 
-    add_user_message(question)
-    add_ai_message(answer)
+    add_user_message(question, user_id)
+    add_ai_message(answer, user_id)
 
     return answer
 
 
-def ask_ai_stream(question, context, action="general"):
+def ask_ai_stream(question, context, user_id, action="general"):
     """
     Streams the response.
     """
@@ -189,6 +190,7 @@ def ask_ai_stream(question, context, action="general"):
     messages = build_messages(
         question,
         context,
+        user_id,
         action=action
     )
 
@@ -224,5 +226,5 @@ def ask_ai_stream(question, context, action="general"):
     print("Gemini Response Time:", round(time.time() - start, 2), "seconds")
     print("=" * 80)
 
-    add_user_message(question)
-    add_ai_message(full_response)
+    add_user_message(question, user_id)
+    add_ai_message(full_response, user_id)

@@ -72,14 +72,16 @@ def is_greeting(question: str) -> bool:
 
 
 # -------------------------------------------------------
-# PDF Validation
+# File Validation
 # -------------------------------------------------------
 
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".webp"}
+
 def allowed_file(filename: str) -> bool:
-    return (
-        filename.lower().endswith(".pdf")
-    )
+    ext = os.path.splitext(filename)[1].lower()
+    return ext in ALLOWED_EXTENSIONS
 
 
 def clean_filename(filename: str) -> str:
+    import os
     return secure_filename(filename)

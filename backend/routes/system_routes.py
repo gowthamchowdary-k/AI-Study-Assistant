@@ -1,6 +1,7 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, g
 
 from memory import clear_memory
+from auth import login_required
 
 
 system_bp = Blueprint(
@@ -34,9 +35,10 @@ def health():
 
 
 @system_bp.route("/reset", methods=["POST"])
+@login_required
 def reset():
 
-    clear_memory()
+    clear_memory(user_id=g.user_id)
 
     return jsonify({
 

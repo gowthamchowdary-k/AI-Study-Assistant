@@ -21,6 +21,15 @@ async function request(endpoint, options = {}) {
 
     }, REQUEST_TIMEOUT);
 
+    // Automatically inject JWT token from localStorage
+    const token = localStorage.getItem("token");
+    const headers = {
+        ...options.headers,
+    };
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
     try {
 
         const response = await fetch(
@@ -30,7 +39,7 @@ async function request(endpoint, options = {}) {
             {
 
                 ...options,
-
+                headers,
                 signal: controller.signal
 
             }
@@ -86,6 +95,52 @@ async function request(endpoint, options = {}) {
         throw err;
 
     }
+
+}
+
+// =======================
+// Auth Services
+// =======================
+
+export async function loginUser(email, password) {
+
+    return request("/auth/login", {
+
+        method: "POST",
+
+        headers: {
+
+            "Content-Type": "application/json"
+
+        },
+
+        body: JSON.stringify({ email, password })
+
+    });
+
+}
+
+export async function registerUser(email, password) {
+
+    return request("/auth/register", {
+
+        method: "POST",
+
+        headers: {
+
+            "Content-Type": "application/json"
+
+        },
+
+        body: JSON.stringify({ email, password })
+
+    });
+
+}
+
+export async function getCurrentUser() {
+
+    return request("/auth/me");
 
 }
 

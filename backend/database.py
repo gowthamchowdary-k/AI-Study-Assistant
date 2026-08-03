@@ -17,26 +17,60 @@ def get_connection():
 def initialize_database():
     """
     Creates all required tables if they do not exist.
+    Handles migration by dropping old tables if they lack the user_id column.
     """
 
     conn = get_connection()
     cursor = conn.cursor()
 
+    # Check if messages table exists and has user_id
+    recreate = False
+    try:
+        cursor.execute("SELECT id FROM messages LIMIT 1")
+        # messages table exists, check if user_id exists in it
+        try:
+            cursor.execute("SELECT user_id FROM messages LIMIT 1")
+        except sqlite3.OperationalError:
+            print("Migration required: user_id missing in messages table. Dropping old tables...")
+            recreate = True
+    except sqlite3.OperationalError:
+        # Table doesn't exist, which is fine
+        pass
+
+    if recreate:
+        cursor.execute("DROP TABLE IF EXISTS messages")
+        cursor.execute("DROP TABLE IF EXISTS context")
+        cursor.execute("DROP TABLE IF EXISTS sources")
+
+    # Users table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     # Chat messages
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
             role TEXT NOT NULL,
             content TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
 
     # Last retrieved document context
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS context (
-            id INTEGER PRIMARY KEY CHECK (id = 1),
-            content TEXT
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER UNIQUE NOT NULL,
+            content TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
 
@@ -44,7 +78,9 @@ def initialize_database():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS sources (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            filename TEXT NOT NULL
+            user_id INTEGER NOT NULL,
+            filename TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
 

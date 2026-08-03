@@ -94,7 +94,7 @@ export default function Sidebar({
                 "
 
             >
-                Upload PDF
+                Upload Materials
             </button>
 
             <input
@@ -103,7 +103,7 @@ export default function Sidebar({
 
                 type="file"
 
-                accept=".pdf"
+                accept=".pdf,.docx,.pptx,.txt,.png,.jpg,.jpeg,.webp"
 
                 hidden
 

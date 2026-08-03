@@ -20,7 +20,7 @@ export default function EmptyState({
 }) {
 
     const suggestions = [
-        "Summarize PDF",
+        "Summarize Docs",
         "Generate Notes",
         "Generate Quiz",
         "Explain Concepts"
@@ -86,7 +86,7 @@ export default function EmptyState({
 
                 <p className="text-gray-500 mt-3 text-base leading-7">
 
-                    Upload a PDF and interact with it using AI.
+                    Upload study materials and interact with them using AI.
                     Ask questions, generate summaries, notes,
                     quizzes, and explore concepts effortlessly.
 
@@ -170,7 +170,7 @@ export default function EmptyState({
 
                         <span className="text-sm font-medium text-gray-600">
 
-                            Upload PDF
+                            Upload Materials
 
                         </span>
 

@@ -1,10 +1,10 @@
-import { FiInfo } from "react-icons/fi";
+import { FiInfo, FiLogOut, FiUser } from "react-icons/fi";
 
-export default function Header({ onAbout }) {
+export default function Header({ onAbout, user, onLogout }) {
 
     return (
 
-        <header className="bg-blue-600 text-white shadow-md">
+        <header className="bg-slate-900 border-b border-slate-800 text-white shadow-md">
 
             <div
                 className="
@@ -24,50 +24,87 @@ export default function Header({ onAbout }) {
 
                 <div>
 
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold break-words">
-
-                        💬 MY AI Study Assistant
-
+                    <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                        📚 AI Study Assistant
                     </h1>
 
-                    <p className="mt-1 text-xs sm:text-sm md:text-base text-blue-100">
-
-                        Ask questions from your uploaded PDF
-
+                    <p className="mt-0.5 text-xs text-slate-400">
+                        Upload study materials and chat with AI
                     </p>
 
                 </div>
 
                 {/* Right Section */}
 
-                <button
+                <div className="flex items-center gap-3">
+                    
+                    {/* User profile identifier */}
+                    {user && (
+                        <div className="hidden sm:flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700/60">
+                            <FiUser className="text-blue-400" size={14} />
+                            <span className="text-xs font-medium text-slate-200">{user.email}</span>
+                        </div>
+                    )}
 
-                    onClick={onAbout}
+                    <button
 
-                    className="
-                        flex
-                        items-center
-                        gap-2
-                        bg-white/15
-                        hover:bg-white/25
-                        transition-all
-                        duration-200
-                        px-4
-                        py-2
-                        rounded-lg
-                        text-sm
-                        font-medium
-                        border
-                        border-white/20
-                    "
+                        onClick={onAbout}
 
-                >
+                        className="
+                            flex
+                            items-center
+                            gap-1.5
+                            bg-slate-800/80
+                            hover:bg-slate-800
+                            border
+                            border-slate-700/50
+                            transition-all
+                            duration-200
+                            px-3
+                            py-2
+                            rounded-lg
+                            text-xs
+                            font-medium
+                            text-slate-300
+                        "
 
-                    <FiInfo size={18} />
+                    >
 
-                    About
+                        <FiInfo size={15} />
 
-                </button>
+                        About
+
+                    </button>
+
+                    {onLogout && (
+                        <button
+                            onClick={onLogout}
+                            className="
+                                flex
+                                items-center
+                                gap-1.5
+                                bg-red-950/40
+                                hover:bg-red-950/80
+                                border
+                                border-red-900/40
+                                hover:border-red-900/60
+                                text-red-400
+                                transition-all
+                                duration-200
+                                px-3
+                                py-2
+                                rounded-lg
+                                text-xs
+                                font-medium
+                            "
+                            title="Log Out"
+                        >
+                            <FiLogOut size={15} />
+                            <span className="hidden xs:inline">Logout</span>
+                        </button>
+                    )}
+
+                </div>
 
             </div>
 

@@ -1,10 +1,9 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 import traceback
-
-print("✅ chat_routes.py LOADED")
 
 from services.chat_service import process_chat
 from memory import get_history
+from auth import login_required
 
 chat_bp = Blueprint(
     "chat",
@@ -13,10 +12,11 @@ chat_bp = Blueprint(
 
 
 @chat_bp.route("/chat", methods=["POST"])
+@login_required
 def chat():
 
     print("\n" + "=" * 70)
-    print("🚀 /chat endpoint called")
+    print(f"🚀 /chat endpoint called (User: {g.user_id})")
     print("=" * 70)
 
     try:
@@ -50,7 +50,7 @@ def chat():
 
         print("\n⏳ Calling process_chat()...")
 
-        result = process_chat(question, action_id=action_id)
+        result = process_chat(question, action_id=action_id, user_id=g.user_id)
 
         print("\n✅ process_chat() completed successfully")
 
@@ -92,13 +92,14 @@ def chat():
 
 
 @chat_bp.route("/history", methods=["GET"])
+@login_required
 def history():
 
-    print("\n📜 /history endpoint called")
+    print(f"\n📜 /history endpoint called (User: {g.user_id})")
 
     try:
 
-        messages = get_history()
+        messages = get_history(user_id=g.user_id)
 
         print(f"💬 Messages Found: {len(messages)}")
 

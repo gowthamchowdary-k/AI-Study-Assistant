@@ -1,7 +1,8 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 
-from services.upload_service import upload_pdf
+from services.upload_service import upload_document
 from services.document_service import total_documents
+from auth import login_required
 
 upload_bp = Blueprint(
     "upload",
@@ -10,6 +11,7 @@ upload_bp = Blueprint(
 
 
 @upload_bp.route("/upload", methods=["POST"])
+@login_required
 def upload():
 
     if "file" not in request.files:
@@ -17,7 +19,7 @@ def upload():
 
         return jsonify({
             "success": False,
-            "error": "No PDF uploaded."
+            "error": "No file uploaded."
         }), 400
 
     file = request.files["file"]
@@ -27,24 +29,24 @@ def upload():
 
         return jsonify({
             "success": False,
-            "error": "No PDF selected."
+            "error": "No file selected."
         }), 400
 
     try:
 
-        filename = upload_pdf(file)
+        filename = upload_document(file, user_id=g.user_id)
 
         return jsonify({
             "success": True,
-            "message": "PDF uploaded successfully.",
+            "message": "Document uploaded and indexed successfully.",
             "file": filename,
-            "documentsIndexed": total_documents()
+            "documentsIndexed": total_documents(g.user_id)
         })
 
     except ValueError as e:
 
         print("=" * 60)
-        print("UPLOAD ERROR (ValueError)")
+        print(f"UPLOAD ERROR (ValueError) for User {g.user_id}")
         print(str(e))
         print("=" * 60)
 
@@ -58,7 +60,7 @@ def upload():
         import traceback
 
         print("=" * 60)
-        print("UPLOAD ERROR (Exception)")
+        print(f"UPLOAD ERROR (Exception) for User {g.user_id}")
         traceback.print_exc()
         print("=" * 60)
 

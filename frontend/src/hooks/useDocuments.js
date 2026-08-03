@@ -61,10 +61,12 @@ export default function useDocuments() {
 
         if (loading) return;
 
-        // Only allow PDF
-        if (file.type !== "application/pdf") {
+        // Validate file extension
+        const allowedExtensions = [".pdf", ".docx", ".pptx", ".txt", ".png", ".jpg", ".jpeg", ".webp"];
+        const ext = "." + file.name.split('.').pop().toLowerCase();
+        if (!allowedExtensions.includes(ext)) {
 
-            toast.error("Please upload a PDF file.");
+            toast.error("Unsupported format. Please upload PDF, DOCX, PPTX, TXT, or Image (PNG, JPG, JPEG, WEBP).");
 
             return;
 

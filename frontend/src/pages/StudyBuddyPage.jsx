@@ -10,7 +10,7 @@ import AboutModal from "../components/AboutModal";
 import useChat from "../hooks/useChat";
 import useDocuments from "../hooks/useDocuments";
 
-export default function StudyBuddyPage() {
+export default function StudyBuddyPage({ user, onLogout }) {
 
     const {
 
@@ -42,7 +42,7 @@ export default function StudyBuddyPage() {
 
         if (documents.length === 0) {
 
-            toast.error("Please upload a PDF first.");
+            toast.error("Please upload study materials first.");
 
             return;
 
@@ -83,14 +83,14 @@ export default function StudyBuddyPage() {
 
         if (documents.length === 0) {
 
-            toast.error("Please upload a PDF first.");
+            toast.error("Please upload study materials first.");
 
             return;
 
         }
 
         ask(
-            "Create a complete study guide from the uploaded PDF including summary, important topics, chapter-wise notes, important formulas, interview questions, MCQs with answers, revision plan, and exam tips.",
+            "Create a complete study guide from the uploaded materials including summary, important topics, chapter-wise notes, important formulas, interview questions, MCQs with answers, revision plan, and exam tips.",
             "summary"
         );
 
@@ -104,6 +104,8 @@ export default function StudyBuddyPage() {
 
             <Header
                 onAbout={() => setShowAbout(true)}
+                user={user}
+                onLogout={onLogout}
             />
 
             {/* Mobile Top Bar */}

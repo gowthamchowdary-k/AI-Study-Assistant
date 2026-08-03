@@ -17,50 +17,63 @@ INDEX_FILE = os.path.join(DATA_FOLDER, "faiss.index")
 CHUNKS_FILE = os.path.join(DATA_FOLDER, "chunks.pkl")
 
 
-def initialize_folders():
+def get_user_upload_folder(user_id):
     """
-    Creates required folders if they don't exist.
+    Returns the user-specific upload directory.
     """
-    os.makedirs(DATA_FOLDER, exist_ok=True)
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    folder = os.path.join(BASE_DIR, "uploads", str(user_id))
+    os.makedirs(folder, exist_ok=True)
+    return folder
 
 
-def save_vector_store(index, chunks):
+def get_user_data_folder(user_id):
     """
-    Saves the FAISS index and chunk metadata.
+    Returns the user-specific data directory.
     """
+    folder = os.path.join(BASE_DIR, "data", str(user_id))
+    os.makedirs(folder, exist_ok=True)
+    return folder
 
-    initialize_folders()
 
-    faiss.write_index(index, INDEX_FILE)
+def get_user_index_file(user_id):
+    return os.path.join(get_user_data_folder(user_id), "faiss.index")
 
-    with open(CHUNKS_FILE, "wb") as file:
+
+def get_user_chunks_file(user_id):
+    return os.path.join(get_user_data_folder(user_id), "chunks.pkl")
+
+
+def save_vector_store(index, chunks, user_id):
+    """
+    Saves the FAISS index and chunk metadata for the user.
+    """
+    faiss.write_index(index, get_user_index_file(user_id))
+
+    with open(get_user_chunks_file(user_id), "wb") as file:
         pickle.dump(chunks, file)
 
 
-def vector_store_exists():
+def vector_store_exists(user_id):
     """
-    Checks whether a saved vector database exists.
+    Checks whether a saved vector database exists for the user.
     """
-
     return (
-        os.path.exists(INDEX_FILE)
+        os.path.exists(get_user_index_file(user_id))
         and
-        os.path.exists(CHUNKS_FILE)
+        os.path.exists(get_user_chunks_file(user_id))
     )
 
 
-def load_vector_store():
+def load_vector_store(user_id):
     """
-    Loads the FAISS index and chunk metadata.
+    Loads the FAISS index and chunk metadata for the user.
     """
-
-    if not vector_store_exists():
+    if not vector_store_exists(user_id):
         return None, None
 
-    index = faiss.read_index(INDEX_FILE)
+    index = faiss.read_index(get_user_index_file(user_id))
 
-    with open(CHUNKS_FILE, "rb") as file:
+    with open(get_user_chunks_file(user_id), "rb") as file:
         chunks = pickle.load(file)
 
     return index, chunks
@@ -68,22 +81,19 @@ def load_vector_store():
 
 def get_upload_folder():
     """
-    Returns the upload directory path.
+    Deprecated: use get_user_upload_folder instead.
     """
-
-    initialize_folders()
-
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     return UPLOAD_FOLDER
 
 
-def clear_vector_store():
+def clear_vector_store(user_id):
     """
-    Deletes the saved vector database.
-    Useful when rebuilding from uploaded PDFs.
+    Deletes the user's saved vector database files.
     """
-
-    if os.path.exists(INDEX_FILE):
-        os.remove(INDEX_FILE)
-
-    if os.path.exists(CHUNKS_FILE):
-        os.remove(CHUNKS_FILE)
+    idx_path = get_user_index_file(user_id)
+    chk_path = get_user_chunks_file(user_id)
+    if os.path.exists(idx_path):
+        os.remove(idx_path)
+    if os.path.exists(chk_path):
+        os.remove(chk_path)
