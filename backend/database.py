@@ -98,9 +98,89 @@ def initialize_database():
         )
     """)
 
+    # Documents tracking table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS documents (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            filename TEXT NOT NULL,
+            original_filename TEXT NOT NULL,
+            status TEXT NOT NULL,
+            error_message TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE(user_id, filename)
+        )
+    """)
+
     conn.commit()
     conn.close()
 
 
 # Create tables automatically when imported
 initialize_database()
+
+
+def add_document_record(user_id, filename, original_filename, status):
+    """
+    Creates a new document tracking record in the database.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT OR REPLACE INTO documents (user_id, filename, original_filename, status, error_message) VALUES (?, ?, ?, ?, NULL)",
+            (user_id, filename, original_filename, status)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def update_document_status(user_id, filename, status, error_message=None):
+    """
+    Updates the status of a document tracking record.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "UPDATE documents SET status = ?, error_message = ? WHERE user_id = ? AND filename = ?",
+            (status, error_message, user_id, filename)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_user_documents(user_id):
+    """
+    Retrieves all document records for a given user from the database.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT filename, original_filename, status, error_message, created_at FROM documents WHERE user_id = ? ORDER BY created_at DESC",
+            (user_id,)
+        )
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+def delete_document_record(user_id, filename):
+    """
+    Removes a document record from the database.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "DELETE FROM documents WHERE user_id = ? AND filename = ?",
+            (user_id, filename)
+        )
+        conn.commit()
+    finally:
+        conn.close()

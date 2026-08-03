@@ -9,19 +9,53 @@ from config import GEMINI_API_KEY, GEMINI_MODEL
 def read_pdf(file_path):
     """
     Reads a PDF page by page and returns text and page numbers.
+    Falls back to Gemini API OCR if text is empty or parsing fails.
     """
-    reader = PdfReader(file_path)
     pages = []
     file_name = os.path.basename(file_path)
 
-    for page_number, page in enumerate(reader.pages, start=1):
-        extracted = page.extract_text()
-        if extracted and extracted.strip():
-            pages.append({
-                "file": file_name,
-                "page": page_number,
-                "text": extracted
-            })
+    try:
+        reader = PdfReader(file_path)
+        for page_number, page in enumerate(reader.pages, start=1):
+            extracted = page.extract_text()
+            if extracted and extracted.strip():
+                pages.append({
+                    "file": file_name,
+                    "page": page_number,
+                    "text": extracted
+                })
+    except Exception as e:
+        print(f"pypdf extraction failed for {file_name}, falling back to Gemini OCR: {e}")
+
+    # Fall back to Gemini PDF OCR if no selectable text was found
+    if not pages:
+        print(f"No selectable text found in {file_name}. Performing Gemini PDF OCR...")
+        if not GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY is not set in environment. OCR fallback requires a Gemini API key.")
+
+        with open(file_path, "rb") as f:
+            pdf_bytes = f.read()
+
+        try:
+            client = genai.Client(api_key=GEMINI_API_KEY)
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=[
+                    types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
+                    "Extract all text from this PDF document verbatim. Return it page-by-page or section-by-section. Do not summarize, explain, or edit the content."
+                ]
+            )
+            text = response.text or ""
+            if text.strip():
+                pages.append({
+                    "file": file_name,
+                    "page": 1,
+                    "text": text
+                })
+        except Exception as ocr_err:
+            print(f"Gemini PDF OCR failed for {file_name}: {ocr_err}")
+            raise RuntimeError(f"Failed to extract text from PDF: both local parsing and cloud OCR failed. OCR Error: {ocr_err}")
+
     return pages
 
 def read_docx(file_path):

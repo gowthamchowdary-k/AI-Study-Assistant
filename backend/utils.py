@@ -3,6 +3,7 @@ Common utility functions used throughout the backend.
 """
 
 import re
+import os
 from werkzeug.utils import secure_filename
 
 

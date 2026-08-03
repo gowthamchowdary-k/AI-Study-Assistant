@@ -1,7 +1,5 @@
 import os
 import pickle
-import faiss
-
 
 # Base project directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,7 +21,7 @@ def get_user_upload_folder(user_id):
     """
     Returns the user-specific upload directory.
     """
-    folder = os.path.join(BASE_DIR, "uploads", str(user_id))
+    folder = os.path.join(UPLOAD_FOLDER, str(user_id))
     os.makedirs(folder, exist_ok=True)
     return folder
 
@@ -32,7 +30,7 @@ def get_user_data_folder(user_id):
     """
     Returns the user-specific data directory.
     """
-    folder = os.path.join(BASE_DIR, "data", str(user_id))
+    folder = os.path.join(DATA_FOLDER, str(user_id))
     os.makedirs(folder, exist_ok=True)
     return folder
 
@@ -47,9 +45,10 @@ def get_user_chunks_file(user_id):
 
 def save_vector_store(index, chunks, user_id):
     """
-    Saves the FAISS index and chunk metadata for the user.
+    Saves the index and chunk metadata for the user.
     """
-    faiss.write_index(index, get_user_index_file(user_id))
+    with open(get_user_index_file(user_id), "wb") as file:
+        pickle.dump(index, file)
 
     with open(get_user_chunks_file(user_id), "wb") as file:
         pickle.dump(chunks, file)
@@ -68,12 +67,13 @@ def vector_store_exists(user_id):
 
 def load_vector_store(user_id):
     """
-    Loads the FAISS index and chunk metadata for the user.
+    Loads the index and chunk metadata for the user.
     """
     if not vector_store_exists(user_id):
         return None, None
 
-    index = faiss.read_index(get_user_index_file(user_id))
+    with open(get_user_index_file(user_id), "rb") as file:
+        index = pickle.load(file)
 
     with open(get_user_chunks_file(user_id), "rb") as file:
         chunks = pickle.load(file)

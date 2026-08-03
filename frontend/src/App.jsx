@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Toaster } from "react-hot-toast";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import StudyBuddyPage from "./pages/StudyBuddyPage";
@@ -58,28 +59,27 @@ export default function App() {
         );
     }
 
-    if (page === "login") {
-        return (
-            <LoginPage
-                onLoginSuccess={handleLoginSuccess}
-                onNavigateToRegister={() => setPage("register")}
-            />
-        );
-    }
-
-    if (page === "register") {
-        return (
-            <RegisterPage
-                onRegisterSuccess={handleLoginSuccess}
-                onNavigateToLogin={() => setPage("login")}
-            />
-        );
-    }
-
     return (
-        <StudyBuddyPage 
-            user={user} 
-            onLogout={handleLogout} 
-        />
+        <>
+            <Toaster position="top-right" reverseOrder={false} />
+            {page === "login" && (
+                <LoginPage
+                    onLoginSuccess={handleLoginSuccess}
+                    onNavigateToRegister={() => setPage("register")}
+                />
+            )}
+            {page === "register" && (
+                <RegisterPage
+                    onRegisterSuccess={handleLoginSuccess}
+                    onNavigateToLogin={() => setPage("login")}
+                />
+            )}
+            {page === "dashboard" && (
+                <StudyBuddyPage 
+                    user={user} 
+                    onLogout={handleLogout} 
+                />
+            )}
+        </>
     );
 }

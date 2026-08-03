@@ -11,8 +11,10 @@ class ChatServiceContextTests(unittest.TestCase):
     @patch("services.chat_service.search_chunks")
     @patch("services.chat_service.get_chunks")
     @patch("services.chat_service.get_index")
+    @patch("services.chat_service.get_context")
     def test_process_chat_uses_retrieved_context_in_prompt(
         self,
+        mock_get_context,
         mock_get_index,
         mock_get_chunks,
         mock_search_chunks,
@@ -20,6 +22,7 @@ class ChatServiceContextTests(unittest.TestCase):
         mock_ask_ai,
         mock_save_context,
     ):
+        mock_get_context.return_value = None
         mock_get_index.return_value = object()
         mock_get_chunks.return_value = [{"text": "doc chunk"}]
         mock_search_chunks.return_value = [

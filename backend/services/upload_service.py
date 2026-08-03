@@ -1,21 +1,18 @@
 import os
+import threading
 import traceback
 
-from vector_store import (
-    get_user_upload_folder,
-    clear_vector_store
-)
+from vector_store import get_user_upload_folder
 from services.rag_service import rebuild_vector_database
-from utils import (
-    allowed_file,
-    clean_filename
-)
+from utils import allowed_file, clean_filename
+from database import add_document_record
 
 
 def upload_document(file, user_id):
     """
-    Validates and uploads a study material (PDF, DOCX, PPTX, TXT, Images).
-    Automatically rebuilds the vector database for the user.
+    Saves the file to local storage, creates an initial database record as 'Uploaded',
+    spawns a background thread to build the vector database asynchronously,
+    and returns the filename immediately.
     """
     if file is None:
         raise ValueError("No file uploaded.")
@@ -32,26 +29,24 @@ def upload_document(file, user_id):
     user_upload_folder = get_user_upload_folder(user_id)
     save_path = os.path.join(user_upload_folder, filename)
 
-    try:
-        # Save the new document (overwriting existing file with the same name if it exists)
-        file.save(save_path)
-        print(f"Uploaded: {filename} for user {user_id}")
+    # 1. Save the file to writeable folder
+    file.save(save_path)
+    print(f"Uploaded and saved: {filename} for user {user_id}")
 
-        # Clear old vector database and rebuild it incorporating all current documents
-        clear_vector_store(user_id)
-        rebuild_vector_database(user_id)
-        print(f"Vector database rebuilt successfully for user {user_id}.")
+    # 2. Add database tracking record immediately
+    add_document_record(user_id, filename, file.filename, "Uploaded")
 
-        return filename
+    # 3. Spawn background thread to index RAG context asynchronously
+    def index_worker():
+        try:
+            print(f"Background indexing thread started for user {user_id}...")
+            rebuild_vector_database(user_id)
+            print(f"Background indexing completed successfully for user {user_id}.")
+        except Exception as err:
+            print(f"CRITICAL: Background indexing thread failed for user {user_id}: {err}")
+            traceback.print_exc()
 
-    except Exception as e:
-        # Remove the uploaded file if indexing fails
-        if os.path.exists(save_path):
-            os.remove(save_path)
+    thread = threading.Thread(target=index_worker)
+    thread.start()
 
-        print("=" * 60)
-        print(f"UPLOAD FAILED FOR USER {user_id}")
-        traceback.print_exc()
-        print("=" * 60)
-
-        raise Exception(f"Failed to process and index document: {e}")
+    return filename

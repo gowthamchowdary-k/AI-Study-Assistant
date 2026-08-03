@@ -11,7 +11,7 @@ def embed_text(text: str) -> list[float]:
         
     client = genai.Client(api_key=GEMINI_API_KEY)
     response = client.models.embed_content(
-        model="text-embedding-004",
+        model="gemini-embedding-001",
         contents=text
     )
     return response.embeddings[0].values
@@ -37,9 +37,9 @@ def create_embeddings(chunks):
 
     client = genai.Client(api_key=GEMINI_API_KEY)
     
-    # Batch embed texts using Gemini's API
+    # Batch embed texts using Gemini's active embedding model
     response = client.models.embed_content(
-        model="text-embedding-004",
+        model="gemini-embedding-001",
         contents=texts
     )
     
