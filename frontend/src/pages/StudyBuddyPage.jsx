@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import ChatWindow from "../components/ChatWindow";
 import MessageInput from "../components/MessageInput";
+import AboutModal from "../components/AboutModal";
 
 import useChat from "../hooks/useChat";
 import useDocuments from "../hooks/useDocuments";
@@ -30,6 +31,7 @@ export default function StudyBuddyPage() {
     } = useDocuments();
 
     const [showSidebar, setShowSidebar] = useState(false);
+    const [showAbout, setShowAbout] = useState(false);
 
     // Shared refs
     const uploadTrigger = useRef(null);
@@ -40,7 +42,7 @@ export default function StudyBuddyPage() {
 
         if (documents.length === 0) {
 
-            toast.error("Please upload at least one PDF first.");
+            toast.error("Please upload a PDF first.");
 
             return;
 
@@ -48,13 +50,13 @@ export default function StudyBuddyPage() {
 
         let actionId = "general";
 
-        if (prompt.toLowerCase().includes("mcq")) {
+        if (prompt.toLowerCase().includes("quiz")) {
             actionId = "generate_mcqs";
         } else if (prompt.toLowerCase().includes("summarize")) {
             actionId = "summary";
         } else if (prompt.toLowerCase().includes("explain")) {
             actionId = "explain";
-        } else if (prompt.toLowerCase().includes("topic")) {
+        } else if (prompt.toLowerCase().includes("notes")) {
             actionId = "notes";
         }
 
@@ -62,7 +64,7 @@ export default function StudyBuddyPage() {
 
     };
 
-    // Upload PDFs
+    // Upload PDF
     const handleUploadClick = () => {
 
         uploadTrigger.current?.();
@@ -76,12 +78,12 @@ export default function StudyBuddyPage() {
 
     };
 
-    // Learn Faster
+    // Learn Smarter
     const handleLearnClick = () => {
 
         if (documents.length === 0) {
 
-            toast.error("Please upload at least one PDF first.");
+            toast.error("Please upload a PDF first.");
 
             return;
 
@@ -98,7 +100,11 @@ export default function StudyBuddyPage() {
 
         <div className="h-screen flex flex-col bg-gray-100">
 
-            <Header />
+            {/* Header */}
+
+            <Header
+                onAbout={() => setShowAbout(true)}
+            />
 
             {/* Mobile Top Bar */}
 
@@ -221,6 +227,13 @@ export default function StudyBuddyPage() {
                 </main>
 
             </div>
+
+            {/* About Modal */}
+
+            <AboutModal
+                open={showAbout}
+                onClose={() => setShowAbout(false)}
+            />
 
         </div>
 

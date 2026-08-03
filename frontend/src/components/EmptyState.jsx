@@ -20,10 +20,10 @@ export default function EmptyState({
 }) {
 
     const suggestions = [
-        "Summarize this PDF",
-        "Generate 10 MCQs",
-        "Explain this chapter",
-        "List important topics"
+        "Summarize PDF",
+        "Generate Notes",
+        "Generate Quiz",
+        "Explain Concepts"
     ];
 
     return (
@@ -32,11 +32,11 @@ export default function EmptyState({
 
             <motion.div
 
-                initial={{ scale: 0.8, opacity: 0 }}
+                initial={{ scale: 0.9, opacity: 0 }}
 
                 animate={{ scale: 1, opacity: 1 }}
 
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.4 }}
 
                 className="
                     bg-white
@@ -50,6 +50,8 @@ export default function EmptyState({
                 "
 
             >
+
+                {/* Logo */}
 
                 <div
                     className="
@@ -66,26 +68,31 @@ export default function EmptyState({
                 >
 
                     <FiBook
-                        size={42}
+                        size={40}
                         className="text-blue-600"
                     />
 
                 </div>
 
+                {/* Title */}
+
                 <h1 className="text-3xl font-bold text-gray-800">
 
-                    Welcome to MY AI Study Assistant
+                    Welcome to AI Study Assistant
 
                 </h1>
 
-                <p className="text-gray-500 mt-3 text-base">
+                {/* Subtitle */}
 
-                    Upload one or more PDFs and ask questions,
-                    generate notes, quizzes, summaries, and much more.
+                <p className="text-gray-500 mt-3 text-base leading-7">
+
+                    Upload a PDF and interact with it using AI.
+                    Ask questions, generate summaries, notes,
+                    quizzes, and explore concepts effortlessly.
 
                 </p>
 
-                {/* Top Suggestions */}
+                {/* Suggestions */}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
 
@@ -133,7 +140,7 @@ export default function EmptyState({
 
                 </div>
 
-                {/* Bottom Actions */}
+                {/* Bottom Features */}
 
                 <div className="grid grid-cols-3 gap-4 mt-10">
 
@@ -163,7 +170,7 @@ export default function EmptyState({
 
                         <span className="text-sm font-medium text-gray-600">
 
-                            Upload PDFs
+                            Upload PDF
 
                         </span>
 
@@ -227,7 +234,7 @@ export default function EmptyState({
 
                         <span className="text-sm font-medium text-gray-600">
 
-                            Learn Faster
+                            Learn Smarter
 
                         </span>
 

@@ -64,12 +64,19 @@ export default function Sidebar({
                 p-4
                 md:p-5
                 shadow-sm
+                flex
+                flex-col
+                h-full
             "
         >
+
+            {/* Sidebar Title */}
 
             <h2 className="text-lg md:text-xl font-semibold mb-4">
                 📄 Document
             </h2>
+
+            {/* Upload Button */}
 
             <button
 
@@ -104,7 +111,9 @@ export default function Sidebar({
 
             />
 
-            <div className="mt-5 max-h-[55vh] overflow-y-auto">
+            {/* Document List */}
+
+            <div className="mt-5 flex-1 overflow-y-auto">
 
                 <DocumentList
 
@@ -115,6 +124,28 @@ export default function Sidebar({
                 />
 
             </div>
+
+            {/* Footer */}
+
+            <div className="mt-6 pt-4 border-t text-center">
+
+    <p className="text-xs text-gray-500 mb-2">
+        Developed by
+    </p>
+
+    <p className="text-x text-gray-700 leading-6">
+        Kunta Gowtham Chowdary
+        <br />
+        &
+        <br />
+        Nukavarapu Eswar Chowdary
+    </p>
+
+    <p className="text-[11px] text-gray-400 mt-3">
+        AI Study Assistant v1.0
+    </p>
+
+</div>
 
         </aside>
 
