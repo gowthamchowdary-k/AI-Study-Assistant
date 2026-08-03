@@ -1,5 +1,6 @@
-from embeddings import model
+from embeddings import embed_text
 from collections import defaultdict 
+import numpy as np
 
 def similarity_from_distance(distance):
     """Convert L2 distance into a 0..1 similarity score."""
@@ -23,10 +24,7 @@ def search_chunks(question, index, chunks,
     4. Return balanced multi-document context.
     """
 
-    question_embedding = model.encode(
-        [question],
-        convert_to_numpy=True
-    ).astype("float32")
+    question_embedding = np.array([embed_text(question)], dtype="float32")
 
     distances, indices = index.search(
         question_embedding,

@@ -1,0 +1,38 @@
+# Ignore local python virtual environment
+.venv/
+backend/.venv/
+
+# Ignore frontend build dependencies and local outputs
+frontend/node_modules/
+frontend/dist/
+node_modules/
+
+# Ignore local upload databases and user caches
+backend/uploads/
+backend/data/
+backend/study_assistant.db
+data/
+uploads/
+
+# Ignore git folder
+.git/
+.github/
+
+# Ignore IDE caches
+.vscode/
+.idea/
+
+# Ignore backup and compression files
+*.rar
+*.zip
+*.tar.gz
+
+# Ignore python caches
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore local tests
+backend/tests/
+tests/

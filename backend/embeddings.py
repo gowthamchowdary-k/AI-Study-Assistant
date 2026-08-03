@@ -1,27 +1,25 @@
-from sentence_transformers import SentenceTransformer
+from google import genai
 import numpy as np
+from config import GEMINI_API_KEY
 
-# Load the embedding model only once
-model = SentenceTransformer("all-MiniLM-L6-v2")
-
+def embed_text(text: str) -> list[float]:
+    """
+    Generate embedding values for a single text string using Gemini API.
+    """
+    if not GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY is not set. Check your environment variables.")
+        
+    client = genai.Client(api_key=GEMINI_API_KEY)
+    response = client.models.embed_content(
+        model="text-embedding-004",
+        contents=text
+    )
+    return response.embeddings[0].values
 
 def create_embeddings(chunks):
     """
-    Creates embeddings for the text inside each chunk.
-
-    Input:
-    [
-        {
-            "text": "...",
-            "file": "...",
-            "page": 1
-        }
-    ]
-
-    Output:
-        numpy.ndarray (float32)
+    Creates embeddings for the text inside each chunk using the Gemini API.
     """
-
     if not chunks:
         raise ValueError("No text chunks found to embed.")
 
@@ -34,14 +32,21 @@ def create_embeddings(chunks):
     if not texts:
         raise ValueError("All extracted chunks are empty.")
 
-    embeddings = model.encode(
-        texts,
-        convert_to_numpy=True,
-        show_progress_bar=True
-    )
+    if not GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY is not set. Check your environment variables.")
 
+    client = genai.Client(api_key=GEMINI_API_KEY)
+    
+    # Batch embed texts using Gemini's API
+    response = client.models.embed_content(
+        model="text-embedding-004",
+        contents=texts
+    )
+    
+    embeddings_list = [emb.values for emb in response.embeddings]
+    
     embeddings = np.asarray(
-        embeddings,
+        embeddings_list,
         dtype=np.float32
     )
 
