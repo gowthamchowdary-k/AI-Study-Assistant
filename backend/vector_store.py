@@ -6,11 +6,13 @@ import faiss
 # Base project directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Data folder
-DATA_FOLDER = os.path.join(BASE_DIR, "data")
-
-# Upload folder (stores uploaded PDFs)
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+# Set user storage directories. If on Vercel, we must write to /tmp.
+if os.environ.get("VERCEL"):
+    DATA_FOLDER = "/tmp/data"
+    UPLOAD_FOLDER = "/tmp/uploads"
+else:
+    DATA_FOLDER = os.path.join(BASE_DIR, "data")
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
 
 # Vector database files
 INDEX_FILE = os.path.join(DATA_FOLDER, "faiss.index")

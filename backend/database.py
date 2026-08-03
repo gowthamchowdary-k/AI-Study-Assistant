@@ -1,8 +1,22 @@
 import sqlite3
 import os
+import shutil
 
-# Path to the SQLite database file
-DB_PATH = os.path.join(os.path.dirname(__file__), "study_assistant.db")
+# Path to the SQLite database file.
+# On Vercel, the directory is read-only. We must write to /tmp.
+if os.environ.get("VERCEL"):
+    DB_PATH = "/tmp/study_assistant.db"
+    bundled_db = os.path.join(os.path.dirname(__file__), "study_assistant.db")
+    # Copy the bundled database containing our tables if not already in /tmp
+    if os.path.exists(bundled_db) and not os.path.exists(DB_PATH):
+        try:
+            shutil.copy2(bundled_db, DB_PATH)
+            os.chmod(DB_PATH, 0o666)
+            print(f"Vercel DB setup: Copied database to {DB_PATH}")
+        except Exception as e:
+            print(f"Vercel DB setup warning: Failed to copy bundled DB ({e}). A new one will be created.")
+else:
+    DB_PATH = os.path.join(os.path.dirname(__file__), "study_assistant.db")
 
 
 def get_connection():
