@@ -34,6 +34,13 @@ def upload():
 
     try:
 
+        # Allow only one PDF per user
+        if total_documents(g.user_id) >= 1:
+            return jsonify({
+                "success": False,
+                "error": "A PDF is already uploaded. Please remove the existing PDF before uploading another."
+            }), 400
+
         filename = upload_document(file, user_id=g.user_id)
 
         return jsonify({
