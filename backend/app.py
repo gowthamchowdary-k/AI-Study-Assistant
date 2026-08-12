@@ -5,7 +5,6 @@ from routes.chat_routes import chat_bp
 from routes.upload_routes import upload_bp
 from routes.document_routes import document_bp
 from routes.system_routes import system_bp
-from routes.auth_routes import auth_bp
 
 
 def create_app():
@@ -13,8 +12,6 @@ def create_app():
     app = Flask(__name__)
 
     CORS(app)
-
-    app.register_blueprint(auth_bp)
 
     app.register_blueprint(chat_bp)
 
